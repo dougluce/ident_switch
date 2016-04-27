@@ -1,0 +1,15 @@
+/***************************************************************************
+ * This file is part of Roundcube "##PLUGIN##" plugin.              
+ *                                                                 
+ * Your are not allowed to distribute this file or parts of it.    
+ *                                                                 
+ * This file is distributed in the hope that it will be useful,    
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of  
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.          
+ *                                                                 
+ * Copyright (c) 2012 - ##YEAR## Roland 'Rosali' Liebl - all rights reserved
+ * dev-team [at] myroundcube [dot] com
+ * http://myroundcube.com
+ ***************************************************************************/
+
+select.deco{}#taskbar .remotehint{position:absolute; top:52px; left:50%; margin-left:-200px; width:400px; padding:0px; border:1px solid #DEEEFC; background-color:#F2F9FF; text-align:center; font-size:10px; color:#3F70BA;}
