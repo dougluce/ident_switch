@@ -22,7 +22,6 @@ CREATE TABLE ident_switch
 		NOT NULL,
 	port
 		integer
-		NOT NULL
 		CHECK(port > 0 AND port <= 65535),
 	delimiter
 		char(1),
