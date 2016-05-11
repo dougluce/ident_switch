@@ -1,21 +1,45 @@
-CREATE TABLE identities_imap (
-  id serial PRIMARY KEY,
-  user_id integer NOT NULL REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  iid integer NOT NULL REFERENCES identities(identity_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  username varchar(256) DEFAULT NULL,
-  password text,
-  server varchar(256) DEFAULT NULL,
-  enabled smallint NOT NULL DEFAULT 0,
-  label text,
-  preferences text
+CREATE TABLE ident_switch
+(
+	id
+		serial
+		PRIMARY KEY,
+	user_id
+		integer
+		NOT NULL
+		REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
+	iid
+		integer
+		NOT NULL
+		REFERENCES identities(identity_id) ON DELETE CASCADE ON UPDATE CASCADE
+		UNIQUE,
+	username
+		varchar(64)
+		NOT NULL,
+	password
+		varchar(64),
+	host
+		varchar(64)
+		NOT NULL,
+	port
+		integer
+		NOT NULL
+		CHECK(port > 0 AND port <= 65535),
+	secure
+		boolean
+		NOT NULL,
+	delimiter
+		char(1),
+	enabled
+		boolean
+		NOT NULL
+		DEFAULT false,
+	label
+		varchar(32)
+		NOT NULL,
+	UNIQUE (user_id, label)
 );
 
-CREATE TABLE IF NOT EXISTS "system" (
-  name varchar(64) NOT NULL PRIMARY KEY,
-  value text
-);
-
-INSERT INTO "system" (name, value) VALUES ('myrc_identities_imap', 'initial');
-
-CREATE INDEX ix_identities_imap_user_id ON identities_imap(user_id);
-CREATE INDEX ix_identities_imap_iid ON identities_imap(iid);
+CREATE INDEX
+	IX_ident_switch_user_id
+ON
+	ident_switch(user_id);
