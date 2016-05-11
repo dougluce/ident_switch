@@ -123,6 +123,12 @@ class ident_switch extends rcube_plugin
 			{
 				foreach ($r as $k => $v)
 					$args['record']['ident_switch.form.' . $k] = $v;
+
+				// Parse flags
+				if ($r['flags'] & $this->db_enabled)
+					$args['record']['ident_switch.form.enabled'] = true;
+				if ($r['flags'] & $this->db_secure)
+					$args['record']['ident_switch.form.secure'] = true;
 			}
 		}
 
@@ -142,29 +148,30 @@ class ident_switch extends rcube_plugin
 		{ // Record already exists, will update it
 			$sql = 'UPDATE ' .
 				$rc->db->table_name($this->table) .
-				' SET enabled = ?, label = ?, host = ?, secure = ?, port = ?, username = ?, password = ?, delimiter = ?, user_id = ?, iid = ?';
+				' SET flags = ?, label = ?, host = ?, port = ?, username = ?, password = ?, delimiter = ?, user_id = ?, iid = ?';
 		}
 		else
 		{ // No record exists, create new one
 			$sql = 'INSERT INTO ' .
 				$rc->db->table_name($this->table) .
-				'(enabled, label, host, secure, port, username, password, delimiter, user_id, iid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+				'(flags, label, host, port, username, password, delimiter, user_id, iid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
 		}
 
-		ob_start();
-		var_dump($args);
-		error_log(ob_get_contents());
-		ob_end_clean();
+		// Process boolean fields
+		$flags = 0;
+		if (get_input_value('_ident_switch_form_enabled', RCUBE_INPUT_POST))
+			$flags |= $this->db_enabled;
+		if (get_input_value('_ident_switch_form_secure', RCUBE_INPUT_POST))
+			$flags |= $this->db_secure;
 
 		$rc->db->query(
 			$sql,
-			get_input_value('_ident_switch_form_enabled', RCUBE_INPUT_POST),
+			$flags,
 			get_input_value('_ident_switch_form_label', RCUBE_INPUT_POST),
 			get_input_value('_ident_switch_form_host', RCUBE_INPUT_POST),
-			get_input_value('_ident_switch_form_secure', RCUBE_INPUT_POST),
 			get_input_value('_ident_switch_form_port', RCUBE_INPUT_POST),
 			get_input_value('_ident_switch_form_username', RCUBE_INPUT_POST),
-			get_input_value('_ident_switch_form_password', RCUBE_INPUT_POST),
+			$rc->encrypt(get_input_value('_ident_switch_form_password', RCUBE_INPUT_POST)),
 			get_input_value('_ident_switch_form_delimiter', RCUBE_INPUT_POST),
 			$rc->user->ID,
 			$args['id']
@@ -194,6 +201,7 @@ class ident_switch extends rcube_plugin
 
 		if (-1 == $identId)
 		{ // Switch to main account
+			// TODO: Erite code!
 		}
 		else
 		{
@@ -202,23 +210,22 @@ class ident_switch extends rcube_plugin
 			$r = $rc->db->fetch_assoc($q);
 			if (is_array($r))
 			{
-				// Parse server URI
-				$pth = parse_url($r['server']);
+				$port = $r['port'];
 				$ssl = false;
-				if ($pth['scheme'] == 'ssl' || $pth['scheme'] == 'tls')
+				if ($r['flags'] & $this->db_secure)
 				{
 					$ssl = true;
-					if (!$pth['port'])
-						$pth['port'] = 993; // Default SSL/TLS port here!
+					if (!$port)
+						$port = 993; // Default SSL/TLS port here!
 				}
-				if (!$pth['port'])
-					$pth['port'] = 143; // Default port here!
+				if (!$port)
+					$port = 143; // Default port here!
 
-				$_SESSION['storage_host'] = $pth['host'] ? $pth['host'] : $pth['path'];
+				$_SESSION['storage_host'] = $r['host'];
 				$_SESSION['storage_ssl'] = $ssl;
-				$_SESSION['storage_port'] = $pth['port'];
+				$_SESSION['storage_port'] = $port;
 				$_SESSION['username'] = $r['username'];
-				$_SESSION['password'] = $r['password'];
+				$_SESSION['password'] = $rc->decrypt($r['password']);
 
 				$rc->session->remove('folders');
 				$rc->output->redirect(
