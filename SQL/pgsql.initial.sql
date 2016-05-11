@@ -24,18 +24,15 @@ CREATE TABLE ident_switch
 		integer
 		NOT NULL
 		CHECK(port > 0 AND port <= 65535),
-	secure
-		boolean
-		NOT NULL,
 	delimiter
 		char(1),
-	enabled
-		boolean
-		NOT NULL
-		DEFAULT false,
 	label
 		varchar(32)
 		NOT NULL,
+	flags
+		integer
+		NOT NULL
+		DEFAULT(0),
 	UNIQUE (user_id, label)
 );
 

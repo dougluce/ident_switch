@@ -14,6 +14,10 @@ class ident_switch extends rcube_plugin
 
 	private $table = 'ident_switch';
 
+	// Flags user in database
+	private $db_enabled = 1;
+	private $db_secure = 2;
+
 	function init()
 	{
 		$this->add_hook('startup', array($this, 'on_startup'));
@@ -51,8 +55,8 @@ class ident_switch extends rcube_plugin
 
 		// Get list of alternative accounts
 		$sOpt = '';
-		$sql = 'SELECT id, label FROM ' . $rc->db->table_name($this->table) . ' WHERE user_id = ? AND enabled = true';
-		$q = $rc->db->query($sql, $rc->user->data['user_id']);
+		$sql = 'SELECT id, label FROM ' . $rc->db->table_name($this->table) . ' WHERE user_id = ? AND flags & ? > 0';
+		$q = $rc->db->query($sql, $rc->user->data['user_id'], $this->db_enabled);
 		while ($r = $rc->db->fetch_assoc($q))
 		{
 			$sOpt .= html::tag(
