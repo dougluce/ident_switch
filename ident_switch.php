@@ -70,7 +70,12 @@ class ident_switch extends rcube_plugin
 		if (!empty($sOpt))
 		{
 
-			// TODO: Add main account
+			// Add main account
+			$sOpt = html::tag(
+				'option',
+				array('value' => -1),
+				$_SESSION['global_alias'] ? $_SESSION['global_alias'] : $rc->user->data['username']
+			) . $sOpt;
 
 			$this->include_script('ident_switch.js');
 			$sw = html::tag(
