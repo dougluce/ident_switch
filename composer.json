@@ -4,7 +4,7 @@
     "description": "This plugin allows users to switch between different accounts (including remote) in single Roundcube session.",
 	"homepage": "https://bitbucket.org/BoresExpress/ident_switch",
 	"keywords": ["identity", "imap"],
-    "license": "GPLv3+",
+    "license": "GPL-3.0+",
     "authors": [
         {
             "name": "Boris Gulay",
