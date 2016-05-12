@@ -255,7 +255,7 @@ class ident_switch extends rcube_plugin
 				{
 					foreach ($_SESSION as $k => $v)
 					{
-						if (strncasecmp(k, 'storage', 7) === 0 && substr_compare($k, $my_postfix, -$my_postfix_len, $my_postfix_len) === 0)
+						if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $my_postfix, -$my_postfix_len, $my_postfix_len) !== 0)
 						{
 							error_log($k . '=>' . $v);
 							$_SESSION[$k . $my_postfix] = $_SESSION[$k];
