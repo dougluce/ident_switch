@@ -10,5 +10,6 @@ $(function() {
 });
 
 function plugin_switchIdent_switch(val) {
+	console.log("qwe1");
 	rcmail.http_post('plugin.ident_switch.switch', { '_ident-id': val });
 }

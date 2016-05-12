@@ -201,16 +201,31 @@ class ident_switch extends rcube_plugin
 	{
 		$rc = rcmail::get_instance();
 
+		$my_postfix = '_iswitch';
+		$my_postfix_len = strlen($my_postfix);
+
+		error_log('Switcing account!'); // TODO: Add nornal logging here!
+
 		$identId = rcube_utils::get_input_value('_ident-id', RCUBE_INPUT_POST);
 		error_log($identId);
 
 		if (-1 == $identId)
 		{ // Switch to main account
-			// TODO: Erite code!
+			foreach ($_SESSION as $k => $v)
+			{
+				if (substr($k, 0, 7) == 'STORAGE' && substr($k, -$my_postfix_len) == $my_postfix)
+				{
+					error_log($k . '=>' . $v);
+					$_SESSION[$k] = $_SESSION[$k . $my_postfix];
+					$rc->session->remove($k . $my_postfix);
+				}
+			}
+			$_SESSION['username'] = $rc->user->data['username'];
+			$_SESSION['password'] = $_SESSION['password' . $my_postfix];
 		}
 		else
 		{
-			$sql = 'SELECT server, username, password FROM ' . $rc->db->table_name($this->table) . ' WHERE id = ? AND user_id = ?';
+			$sql = 'SELECT host, flags, port, username, password FROM ' . $rc->db->table_name($this->table) . ' WHERE id = ? AND user_id = ?';
 			$q = $rc->db->query($sql, $identId ,$rc->user->ID);
 			$r = $rc->db->fetch_assoc($q);
 			if (is_array($r))
@@ -226,25 +241,44 @@ class ident_switch extends rcube_plugin
 				if (!$port)
 					$port = 143; // Default port here!
 
+				// If we are in default account now
+				// save everything with STORAGE
+				if ($_SESSION['username'] == $rc->user->data['username'])
+				{
+					foreach ($_SESSION as $k => $v)
+					{
+						if (substr($k, 0, 7) == 'STORAGE' && substr($k, -$my_postfix_len) != $my_postfix)
+						{
+							error_log($k . '=>' . $v);
+							$_SESSION[$k . $my_postfix] = $_SESSION[$k];
+                            $rc->session->remove($k);
+						}
+					}
+				}
+				$_SESSION['password' . $my_postfix] = $_SESSION['password'];
+				error_log('Pwd: ' . $_SESSION['password']);
+
 				$_SESSION['storage_host'] = $r['host'];
 				$_SESSION['storage_ssl'] = $ssl;
 				$_SESSION['storage_port'] = $port;
 				$_SESSION['username'] = $r['username'];
-				$_SESSION['password'] = $rc->decrypt($r['password']);
+				$_SESSION['password'] = $r['password'];
 
 				$rc->session->remove('folders');
-				$rc->output->redirect(
-					array(
-						'_task' => 'mail',
-						'_mbox' => rcube_utils::get_input_value('_mbox', RCUBE_INPUT_GET),
-					)
-				);
 			}
 			else
 			{
 				// TODO: Show message in browser
 				error_log('Requested account not found!');
+				return;
 			}
 		}
+
+		$rc->output->redirect(
+			array(
+				'_task' => 'mail',
+				'_mbox' => rcube_utils::get_input_value('_mbox', RCUBE_INPUT_GET),
+			)
+		);
 	}
 }
