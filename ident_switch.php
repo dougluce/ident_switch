@@ -55,13 +55,17 @@ class ident_switch extends rcube_plugin
 
 		// Get list of alternative accounts
 		$sOpt = '';
-		$sql = 'SELECT id, label FROM ' . $rc->db->table_name($this->table) . ' WHERE user_id = ? AND flags & ? > 0';
+		$sql = 'SELECT id, label, username FROM ' . $rc->db->table_name($this->table) . ' WHERE user_id = ? AND flags & ? > 0';
 		$q = $rc->db->query($sql, $rc->user->data['user_id'], $this->db_enabled);
 		while ($r = $rc->db->fetch_assoc($q))
 		{
+			$opts = array('value' => $r['id']);
+			if (strcasecmp($_SESSION['username'], $r['username']) === 0)
+				$opts['selected'] = 'selected';
+
 			$sOpt .= html::tag(
 				'option',
-				array('value' => $r['id']),
+				$opts,
 				$r['label']
 			);
 		}
@@ -71,9 +75,13 @@ class ident_switch extends rcube_plugin
 		{
 
 			// Add main account
+			$opts = array('value' => -1);
+			if (strcasecmp($_SESSION['username'], $rc->user->data['username']) === 0)
+				$opts['selected'] = 'selected';
+
 			$sOpt = html::tag(
 				'option',
-				array('value' => -1),
+				$opts,
 				$_SESSION['global_alias'] ? $_SESSION['global_alias'] : $rc->user->data['username']
 			) . $sOpt;
 
@@ -213,7 +221,7 @@ class ident_switch extends rcube_plugin
 		{ // Switch to main account
 			foreach ($_SESSION as $k => $v)
 			{
-				if (substr($k, 0, 7) == 'STORAGE' && substr($k, -$my_postfix_len) == $my_postfix)
+				if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $my_postfix, -$my_postfix_len, $my_postfix_len) === 0)
 				{
 					error_log($k . '=>' . $v);
 					$_SESSION[$k] = $_SESSION[$k . $my_postfix];
@@ -247,7 +255,7 @@ class ident_switch extends rcube_plugin
 				{
 					foreach ($_SESSION as $k => $v)
 					{
-						if (substr($k, 0, 7) == 'STORAGE' && substr($k, -$my_postfix_len) != $my_postfix)
+						if (strncasecmp(k, 'storage', 7) === 0 && substr_compare($k, $my_postfix, -$my_postfix_len, $my_postfix_len) === 0)
 						{
 							error_log($k . '=>' . $v);
 							$_SESSION[$k . $my_postfix] = $_SESSION[$k];
@@ -256,7 +264,6 @@ class ident_switch extends rcube_plugin
 					}
 				}
 				$_SESSION['password' . $my_postfix] = $_SESSION['password'];
-				error_log('Pwd: ' . $_SESSION['password']);
 
 				$_SESSION['storage_host'] = $r['host'];
 				$_SESSION['storage_ssl'] = $ssl;
