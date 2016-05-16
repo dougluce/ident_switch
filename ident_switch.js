@@ -13,3 +13,8 @@ function plugin_switchIdent_switch(val) {
 	console.log("qwe1");
 	rcmail.http_post('plugin.ident_switch.switch', { '_ident-id': val });
 }
+
+function  plugin_switchIdent_fixIdent(iid) {
+	if (parseInt(iid) > 0)
+		$("#_from").val(iid);
+}

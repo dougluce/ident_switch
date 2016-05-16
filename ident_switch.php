@@ -27,6 +27,7 @@ class ident_switch extends rcube_plugin
 		$this->add_hook('identity_form', array($this, 'on_identity_form'));
 		$this->add_hook('identity_update', array($this, 'on_identity_update'));
 		$this->add_hook('identity_delete', array($this, 'on_identity_delete'));
+		$this->add_hook('template_object_composeheaders', array($this, 'on_template_object_composeheaders'));
 
 		$this->register_action('plugin.ident_switch.switch', array($this, 'on_switch'));
 	}
@@ -223,6 +224,19 @@ class ident_switch extends rcube_plugin
 		return $args;
 	}
 
+	function on_template_object_composeheaders($args)
+	{
+		if ($args['id'] == '_from')
+		{
+			$rc = rcmail::get_instance();
+			if (strcasecmp($_SESSION['username'], $rc->user->data['username']) !== 0)
+			{
+				if (isset($_SESSION['iid' . $this->my_postfix]))
+					$rc->output->add_script('plugin_switchIdent_fixIdent(' . $_SESSION['iid' . $this->my_postfix] . ');', 'docready');
+			}
+		}
+	}
+
 	function on_switch()
 	{
 		$rc = rcmail::get_instance();
@@ -247,10 +261,11 @@ class ident_switch extends rcube_plugin
 			}
 			$_SESSION['username'] = $rc->user->data['username'];
 			$_SESSION['password'] = $_SESSION['password' . $this->my_postfix];
+			$_SESSION['iid' . $this->my_postfix] = -1;
 		}
 		else
 		{
-			$sql = 'SELECT host, flags, port, username, password FROM ' . $rc->db->table_name($this->table) . ' WHERE id = ? AND user_id = ?';
+			$sql = 'SELECT host, flags, port, username, password, iid FROM ' . $rc->db->table_name($this->table) . ' WHERE id = ? AND user_id = ?';
 			$q = $rc->db->query($sql, $identId ,$rc->user->ID);
 			$r = $rc->db->fetch_assoc($q);
 			if (is_array($r))
@@ -287,6 +302,7 @@ class ident_switch extends rcube_plugin
 				$_SESSION['storage_port'] = $port;
 				$_SESSION['username'] = $r['username'];
 				$_SESSION['password'] = $r['password'];
+				$_SESSION['iid' . $this->my_postfix] = $r['iid'];
 
 				$rc->session->remove('folders');
 			}
