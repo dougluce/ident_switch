@@ -13,6 +13,7 @@ class ident_switch extends rcube_plugin
 	public $task='?(?!login|logout).*';
 
 	private $table = 'ident_switch';
+	private $my_postfix = '_iswitch';
 
 	// Flags user in database
 	private $db_enabled = 1;
@@ -22,7 +23,7 @@ class ident_switch extends rcube_plugin
 	{
 		$this->add_hook('startup', array($this, 'on_startup'));
 		$this->add_hook('render_page', array($this, 'on_render_page'));
-#		$this->add_hook('smtp_connect', array($this, 'on_smtp_connect'));
+		$this->add_hook('smtp_connect', array($this, 'on_smtp_connect'));
 		$this->add_hook('identity_form', array($this, 'on_identity_form'));
 		$this->add_hook('identity_update', array($this, 'on_identity_update'));
 		$this->add_hook('identity_delete', array($this, 'on_identity_delete'));
@@ -33,8 +34,10 @@ class ident_switch extends rcube_plugin
 	function on_startup($args)
 	{
 		$rc = rcmail::get_instance();
+		error_log($args['task']);
+		error_log($args['action']);
 
-		if (strtolower($rc->user->data['username']) != strtolower($_SESSION['username']))
+		if (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 1)
 		{ // We are impersonating
 			$rc->config->set('imap_cache', null);
 			$rc->config->set('messages_cache', false);
@@ -52,6 +55,7 @@ class ident_switch extends rcube_plugin
 	function on_render_page($args)
 	{
 		$rc = rcmail::get_instance();
+		error_log($args['template']);
 
 		// Get list of alternative accounts
 		$sOpt = '';
@@ -103,7 +107,21 @@ class ident_switch extends rcube_plugin
 
 	function on_smtp_connect($args)
 	{
-		error_log('on_smtp_connect');
+		$rc = rcmail::get_instance();
+
+		// TODO: Rewrite with full settings!
+		error_log($args['smtp_user']);
+		error_log($args['smtp_pass']);
+
+		if (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 1)
+		{
+			if ($args['smtp_user'] == '%u')
+				$args['smtp_user'] = $rc->user->data['username'];
+			if ($args['smtp_pass'] == '%p')
+				$args['smtp_pass'] = $rc->decrypt($_SESSION['password' . $this->my_postfix]);
+		}
+
+		return $args;
 	}
 
 	function on_identity_form($args)
@@ -209,8 +227,7 @@ class ident_switch extends rcube_plugin
 	{
 		$rc = rcmail::get_instance();
 
-		$my_postfix = '_iswitch';
-		$my_postfix_len = strlen($my_postfix);
+		$my_postfix_len = strlen($this->my_postfix);
 
 		error_log('Switcing account!'); // TODO: Add nornal logging here!
 
@@ -221,15 +238,15 @@ class ident_switch extends rcube_plugin
 		{ // Switch to main account
 			foreach ($_SESSION as $k => $v)
 			{
-				if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $my_postfix, -$my_postfix_len, $my_postfix_len) === 0)
+				if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $this->my_postfix, -$my_postfix_len, $my_postfix_len) === 0)
 				{
 					error_log($k . '=>' . $v);
-					$_SESSION[$k] = $_SESSION[$k . $my_postfix];
-					$rc->session->remove($k . $my_postfix);
+					$_SESSION[$k] = $_SESSION[$k . $this->my_postfix];
+					$rc->session->remove($k . $this->my_postfix);
 				}
 			}
 			$_SESSION['username'] = $rc->user->data['username'];
-			$_SESSION['password'] = $_SESSION['password' . $my_postfix];
+			$_SESSION['password'] = $_SESSION['password' . $this->my_postfix];
 		}
 		else
 		{
@@ -255,15 +272,15 @@ class ident_switch extends rcube_plugin
 				{
 					foreach ($_SESSION as $k => $v)
 					{
-						if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $my_postfix, -$my_postfix_len, $my_postfix_len) !== 0)
+						if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $this->my_postfix, -$my_postfix_len, $my_postfix_len) !== 0)
 						{
 							error_log($k . '=>' . $v);
-							$_SESSION[$k . $my_postfix] = $_SESSION[$k];
+							$_SESSION[$k . $this->my_postfix] = $_SESSION[$k];
                             $rc->session->remove($k);
 						}
 					}
 				}
-				$_SESSION['password' . $my_postfix] = $_SESSION['password'];
+				$_SESSION['password' . $this->my_postfix] = $_SESSION['password'];
 
 				$_SESSION['storage_host'] = $r['host'];
 				$_SESSION['storage_ssl'] = $ssl;
