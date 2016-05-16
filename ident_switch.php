@@ -35,8 +35,7 @@ class ident_switch extends rcube_plugin
 	function on_startup($args)
 	{
 		$rc = rcmail::get_instance();
-		error_log($args['task']);
-		error_log($args['action']);
+		error_log('Task: ' . $args['task'] . ', action: ' . $args['action']);
 
 		if (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 1)
 		{ // We are impersonating
@@ -56,7 +55,7 @@ class ident_switch extends rcube_plugin
 	function on_render_page($args)
 	{
 		$rc = rcmail::get_instance();
-		error_log($args['template']);
+		error_log('Template: ' . $args['template']);
 
 		// Get list of alternative accounts
 		$sOpt = '';
@@ -111,8 +110,6 @@ class ident_switch extends rcube_plugin
 		$rc = rcmail::get_instance();
 
 		// TODO: Rewrite with full settings!
-		error_log($args['smtp_user']);
-		error_log($args['smtp_pass']);
 
 		if (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 1)
 		{
@@ -217,9 +214,10 @@ class ident_switch extends rcube_plugin
 		$rc = rcmail::get_instance();
 
 		$sql = 'DELETE FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
-		$rc->db->query($sql, $args['id'], $rc->user->ID);
+		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
 
-		// TODO: Affected rows count for log
+		if ($rc->db->affected_rows($q))
+			$rc->write_log($this->my_log, 'Deleted associated information for identity with ID = ' . $args['id'] . '.');
 
 		return $args;
 	}
@@ -233,6 +231,8 @@ class ident_switch extends rcube_plugin
 			{
 				if (isset($_SESSION['iid' . $this->my_postfix]))
 					$rc->output->add_script('plugin_switchIdent_fixIdent(' . $_SESSION['iid' . $this->my_postfix] . ');', 'docready');
+				else
+					$rc->write_log($this->my_log, 'Special session variable with active identity ID not found.');
 			}
 		}
 	}
@@ -242,19 +242,16 @@ class ident_switch extends rcube_plugin
 		$rc = rcmail::get_instance();
 
 		$my_postfix_len = strlen($this->my_postfix);
-
-		error_log('Switcing account!'); // TODO: Add nornal logging here!
-
 		$identId = rcube_utils::get_input_value('_ident-id', RCUBE_INPUT_POST);
-		error_log($identId);
 
 		if (-1 == $identId)
 		{ // Switch to main account
+			$rc->write_log($this->my_log, 'Switching mailbox back to default.');
+
 			foreach ($_SESSION as $k => $v)
 			{
 				if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $this->my_postfix, -$my_postfix_len, $my_postfix_len) === 0)
 				{
-					error_log($k . '=>' . $v);
 					$_SESSION[$k] = $_SESSION[$k . $this->my_postfix];
 					$rc->session->remove($k . $this->my_postfix);
 				}
@@ -270,6 +267,11 @@ class ident_switch extends rcube_plugin
 			$r = $rc->db->fetch_assoc($q);
 			if (is_array($r))
 			{
+				$rc->write_log(
+					$this->my_log,
+					'Switching mailbox to one for identity with ID = ' . $r['iid'] . ' (username = \'' . $r['username'] . '\').'
+				);
+
 				$port = $r['port'];
 				$ssl = false;
 				if ($r['flags'] & $this->db_secure)
@@ -289,7 +291,6 @@ class ident_switch extends rcube_plugin
 					{
 						if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $this->my_postfix, -$my_postfix_len, $my_postfix_len) !== 0)
 						{
-							error_log($k . '=>' . $v);
 							$_SESSION[$k . $this->my_postfix] = $_SESSION[$k];
                             $rc->session->remove($k);
 						}
@@ -309,7 +310,7 @@ class ident_switch extends rcube_plugin
 			else
 			{
 				// TODO: Show message in browser
-				error_log('Requested account not found!');
+				$rc->write_log($this->my_log, 'Requested remote mailbox with ID = ' . $identId . ' not found.');
 				return;
 			}
 		}
