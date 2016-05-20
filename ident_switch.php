@@ -176,26 +176,26 @@ class ident_switch extends rcube_plugin
 		// Check field values
 		$noErrors = false;
 
-		$fLabel = trim(get_input_value('_ident_switch_form_label', RCUBE_INPUT_POST));
+		$fLabel = self::ntrim(get_input_value('_ident_switch_form_label', RCUBE_INPUT_POST));
 		if (strlen($fLabel) > 32)
 			$rc->output->show_message('err.label.long', 'error');
 		else
 		{
-			$fHost = trim(get_input_value('_ident_switch_form_host', RCUBE_INPUT_POST));
+			$fHost = self::ntrim(get_input_value('_ident_switch_form_host', RCUBE_INPUT_POST));
 			if (strlen($fHost) > 64)
 				$rc->output->show_message('err.host.long', 'error');
 			else
 			{
-				$fPort = trim(get_input_value('_ident_switch_form_port', RCUBE_INPUT_POST));
-				if (!ctype_digit($fPort) && strlen($fPort) > 0)
+				$fPort = self::ntrim(get_input_value('_ident_switch_form_port', RCUBE_INPUT_POST));
+				if ($fPort && !ctype_digit($fPort))
 					$rc->output->show_message('err.port.num', 'error');
 				else
 				{
-					if (($fPort < 0 || $fPort > 65535) && strlen($fPort) > 0)
+					if ($fPort && ($fPort < 0 || $fPort > 65535))
 						$rc->output->show_message('err.port.num', 'error');
 					else
 					{
-						$fUser = trim(get_input_value('_ident_switch_form_username', RCUBE_INPUT_POST));
+						$fUser = self::ntrim(get_input_value('_ident_switch_form_username', RCUBE_INPUT_POST));
 						if (strlen($fUser) > 64)
 							$rc->output->show_message('err.user.long', 'error');
 						else
@@ -204,7 +204,7 @@ class ident_switch extends rcube_plugin
 								$rc->output->show_message('err.user.empty', 'error');
 							else
 							{
-								$fDelim = trim(get_input_value('_ident_switch_form_delimiter', RCUBE_INPUT_POST));
+								$fDelim = self::ntrim(get_input_value('_ident_switch_form_delimiter', RCUBE_INPUT_POST));
 								if (strlen($fDelim) > 1)
 									$rc->output->show_message('err.delim.long', 'error');
 								else
@@ -376,4 +376,16 @@ class ident_switch extends rcube_plugin
 			)
 		);
 	}
+
+	protected static function ntrim($str)
+	{
+		if (is_null($str))
+			return $str;
+
+		$s = trim($str);
+		if (!$s)
+			return null;
+
+		return $s;
+	}	
 }
