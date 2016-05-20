@@ -200,7 +200,7 @@ class ident_switch extends rcube_plugin
 					$rc->output->show_message('err.port.num', 'error');
 				else
 				{
-					if ($fPort && ($fPort < 0 || $fPort > 65535))
+					if ($fPort && ($fPort <= 0 || $fPort > 65535))
 						$rc->output->show_message('err.port.num', 'error');
 					else
 					{
