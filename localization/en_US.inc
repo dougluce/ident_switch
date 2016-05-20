@@ -13,8 +13,14 @@ $labels['form.enabled'] = 'Enabled';
 // Label
 $labels['form.label'] = 'Label';
 
-// Server URI
-$labels['form.server']='Server URI';
+// Server host name
+$labels['form.host']='Server host name';
+
+// Secure connection (SSL/TLS)
+$labels['form.secure']='Secure connection (SSL/TLS)';
+
+// Port
+$labels['form.port']='Port';
 
 // Username
 $labels['form.username'] = 'Username';
