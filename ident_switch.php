@@ -232,7 +232,7 @@ class ident_switch extends rcube_plugin
 			return $args;
 		}
 
-		$sql = 'SELECT NULL FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
+		$sql = 'SELECT password FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
 		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
 		$r = $rc->db->fetch_assoc($q);
 		if ($r)
@@ -255,6 +255,10 @@ class ident_switch extends rcube_plugin
 		if (get_input_value('_ident_switch_form_secure', RCUBE_INPUT_POST))
 			$flags |= $this->db_secure;
 
+		// Do we need to update pwd?
+		$fPass = get_input_value('_ident_switch_form_password', RCUBE_INPUT_POST);
+		if ($fPass != $r['password'])
+			$fPass = $rc->encrypt($fPass);
 
 		$rc->db->query(
 			$sql,
@@ -263,7 +267,7 @@ class ident_switch extends rcube_plugin
 			$fHost,
 			$fPort,
 			$fUser,
-			$rc->encrypt(get_input_value('_ident_switch_form_password', RCUBE_INPUT_POST)),
+			$fPass,
 			$fDelim,
 			$rc->user->ID,
 			$args['id']
