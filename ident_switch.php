@@ -173,7 +173,55 @@ class ident_switch extends rcube_plugin
 	{
 		$rc = rcmail::get_instance();
 
-		// TODO: check field values
+		// Check field values
+		$noErrors = false;
+
+		$fLabel = trim(get_input_value('_ident_switch_form_label', RCUBE_INPUT_POST));
+		if (strlen($fLabel) > 32)
+			$rc->output->show_message('err.label.long', 'error');
+		else
+		{
+			$fHost = trim(get_input_value('_ident_switch_form_host', RCUBE_INPUT_POST));
+			if (strlen($fHost) > 64)
+				$rc->output->show_message('err.host.long', 'error');
+			else
+			{
+				$fPort = trim(get_input_value('_ident_switch_form_port', RCUBE_INPUT_POST));
+				if (!ctype_digit($fPort) && strlen($fPort) > 0)
+					$rc->output->show_message('err.port.num', 'error');
+				else
+				{
+					if (($fPort < 0 || $fPort > 65535) && strlen($fPort) > 0)
+						$rc->output->show_message('err.port.num', 'error');
+					else
+					{
+						$fUser = trim(get_input_value('_ident_switch_form_username', RCUBE_INPUT_POST));
+						if (strlen($fUser) > 64)
+							$rc->output->show_message('err.user.long', 'error');
+						else
+						{
+							if (!$fUser)
+								$rc->output->show_message('err.user.empty', 'error');
+							else
+							{
+								$fDelim = trim(get_input_value('_ident_switch_form_delimiter', RCUBE_INPUT_POST));
+								if (strlen($fDelim) > 1)
+									$rc->output->show_message('err.delim.long', 'error');
+								else
+									$noErrors = true;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (!$noErrors)
+		{
+			//$rc->output->send();
+			$args['abort'] = true;
+			return $args;
+		}
 
 		$sql = 'SELECT NULL FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
 		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
@@ -198,15 +246,16 @@ class ident_switch extends rcube_plugin
 		if (get_input_value('_ident_switch_form_secure', RCUBE_INPUT_POST))
 			$flags |= $this->db_secure;
 
+
 		$rc->db->query(
 			$sql,
 			$flags,
-			get_input_value('_ident_switch_form_label', RCUBE_INPUT_POST),
-			get_input_value('_ident_switch_form_host', RCUBE_INPUT_POST),
-			get_input_value('_ident_switch_form_port', RCUBE_INPUT_POST),
-			get_input_value('_ident_switch_form_username', RCUBE_INPUT_POST),
+			$fLabel,
+			$fHost,
+			$fPort,
+			$fUser,
 			$rc->encrypt(get_input_value('_ident_switch_form_password', RCUBE_INPUT_POST)),
-			get_input_value('_ident_switch_form_delimiter', RCUBE_INPUT_POST),
+			$fDelim,
 			$rc->user->ID,
 			$args['id']
 		);
