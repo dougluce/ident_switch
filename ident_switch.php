@@ -67,17 +67,26 @@ class ident_switch extends rcube_plugin
 			if (strcasecmp($_SESSION['username'], $r['username']) === 0)
 				$opts['selected'] = 'selected';
 
+			// Make label
+			$lbl = $r['label'];
+			if (!$lbl)
+			{
+				if (strpos($r['username'], '@') === false)
+					$lbl = $r['username'] . '@' . ($r['host'] ? $r['host'] : 'localhost');
+				else
+					$lbl = $r['username'];
+			}
+
 			$sOpt .= html::tag(
 				'option',
 				$opts,
-				$r['label']
+				rcube::Q($lbl)
 			);
 		}
 
 		// Render UI if user has extra accounts
 		if (!empty($sOpt))
 		{
-
 			// Add main account
 			$opts = array('value' => -1);
 			if (strcasecmp($_SESSION['username'], $rc->user->data['username']) === 0)
@@ -352,7 +361,7 @@ class ident_switch extends rcube_plugin
 				}
 				$_SESSION['password' . $this->my_postfix] = $_SESSION['password'];
 
-				$_SESSION['storage_host'] = $r['host'];
+				$_SESSION['storage_host'] = $r['host'] ? $r['host'] : 'localhost'; // Default host here!
 				$_SESSION['storage_ssl'] = $ssl;
 				$_SESSION['storage_port'] = $port;
 				$_SESSION['username'] = $r['username'];
