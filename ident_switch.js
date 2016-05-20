@@ -3,10 +3,15 @@
  */
 
 $(function() {
-	if ($('#plugin-ident_switch-account').size() > 0) {
-		$('#plugin-ident_switch-account').prependTo('.topright');
-		$('.topright .username').hide();
-		$('#plugin-ident_switch-account').show();
+	var $truName = $('.topright .username');
+	if ($truName.size() > 0) {
+		$sw = $('#plugin-ident_switch-account');
+		if ($sw.size() > 0) {
+			$sw.prependTo('.topright');
+			$truName.hide();
+			$('#plugin-ident_switch-account').show();
+			console.log("Doing replace.");
+		}
 	}
 
 	var $enFld = $("INPUT[name='_ident_switch.form.enabled']");
