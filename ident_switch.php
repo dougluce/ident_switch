@@ -131,7 +131,7 @@ class ident_switch extends rcube_plugin
 		$args['form']['ident_switch'] = array(
 			'name' => $this->gettext('form.caption'),
 			'content' => array(
-				'ident_switch.form.enabled' => array('type' => 'checkbox'),
+				'ident_switch.form.enabled' => array('type' => 'checkbox', 'onchange' => 'plugin_switchIdent_enabled_onChange();'),
 				'ident_switch.form.label' => array('type' => 'text', 'size' => 32),
 				'ident_switch.form.host' => array('type' => 'text', 'size' => 64),
 				'ident_switch.form.secure' => array('type' => 'checkbox'),
