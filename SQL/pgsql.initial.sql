@@ -18,16 +18,14 @@ CREATE TABLE ident_switch
 	password
 		varchar(64),
 	host
-		varchar(64)
-		NOT NULL,
+		varchar(64),
 	port
 		integer
 		CHECK(port > 0 AND port <= 65535),
 	delimiter
 		char(1),
 	label
-		varchar(32)
-		NOT NULL,
+		varchar(32),
 	flags
 		integer
 		NOT NULL
