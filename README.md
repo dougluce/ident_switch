@@ -8,4 +8,4 @@ This plugin allows users to switch between different accounts (including remote)
 ### Where to start ###
 * In settigs interface create new identity.
 * For all identities except default you will see new section of settings - IMAP. Enter data required to connect to  remote server. Don't forget to check Enabled check box.
-* After you have created at least one identity with active IMAP settings you will see combobox in the top right corner instead of plain text field with account name. It will allow you to switch to another account.
+* After you have created at least one identity with active IMAP settings you will see combobox in the top right corner instead of plain text field with account name. It will allows you to switch to another account.
