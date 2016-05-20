@@ -125,6 +125,11 @@ class ident_switch extends rcube_plugin
 	function on_identity_form($args)
 	{
 		$rc = rcmail::get_instance();
+
+		// Do now show options for default identity
+		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
+			return $args;
+
 		$this->add_texts('localization');
 
 		// Create our field set
