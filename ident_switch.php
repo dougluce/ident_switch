@@ -135,7 +135,7 @@ class ident_switch extends rcube_plugin
 	{
 		$rc = rcmail::get_instance();
 
-		// Do now show options for default identity
+		// Do not show options for default identity
 		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
 			return $args;
 
@@ -181,6 +181,11 @@ class ident_switch extends rcube_plugin
 	function on_identity_update($args)
 	{
 		$rc = rcmail::get_instance();
+
+		// Do not do anything for default identity
+		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
+			return $args;
+
 
 		$this->add_texts('localization');
 
