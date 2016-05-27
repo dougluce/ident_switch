@@ -30,3 +30,24 @@ $labels['form.password'] = 'Пароль';
 
 // Folder hierarchy delimiter
 $labels['form.delimiter'] = 'Разделитель в иерархии папок';
+
+// \'Username\' field in IMAP section cannot be empty.
+$labels['err.user.empty'] = '\'Имя пользователя\' в разделе IMAP не может быть пустым.';
+
+// Value in \'Label\' field of IMAP section is too long (32 chars max).
+$labels['err.label.long'] = '\'Название\' в разделе IMAP должно быть не длинее 32 символов.';
+
+// Value in \'Server host name\' field of IMAP section is too long (64 chars max).
+$labels['err.host.long'] = '\'Адрес сервера\' в разделе IMAP должен быть не длинее 64 символов.';
+
+// Value in \'Username\' field of IMAP section is too long (64 chars max).
+$labels['err.user.long'] = '\'Имя пользователя\' в секции IMAP должно быть не длинее 64 символов.';
+
+// Value in \'Folder hierarchy delimiter\' field of IMAP section is too long (1 char max).
+$labels['err.delim.long'] = '\'Разделитель в иерархии папок\' в секции IMAP должен быть не длинее 1 символа.';
+
+// Value in \'Port\' field of IMAP section must be a number.
+$labels['err.port.num'] = '\'Порт\' в секции IMAP должен быть числом.';
+
+// Value in \'Port\' field of IMAP section must be between 1 and 65535.
+$labels['err.port.rtange'] = '\'Порт\' в секции IMAP должен быть в диапазоне от 1 до 65535.';
