@@ -182,6 +182,8 @@ class ident_switch extends rcube_plugin
 	{
 		$rc = rcmail::get_instance();
 
+		$this->add_texts('localization');
+
 		// Check field values
 		$noErrors = false;
 
@@ -201,7 +203,7 @@ class ident_switch extends rcube_plugin
 				else
 				{
 					if ($fPort && ($fPort <= 0 || $fPort > 65535))
-						$rc->output->show_message('err.port.num', 'error');
+						$rc->output->show_message('err.port.range', 'error');
 					else
 					{
 						$fUser = self::ntrim(get_input_value('_ident_switch_form_username', RCUBE_INPUT_POST));
@@ -210,7 +212,7 @@ class ident_switch extends rcube_plugin
 						else
 						{
 							if (!$fUser)
-								$rc->output->show_message('err.user.empty', 'error');
+								$rc->output->show_message('ident_switch.err.user.empty', 'error');
 							else
 							{
 								$fDelim = self::ntrim(get_input_value('_ident_switch_form_delimiter', RCUBE_INPUT_POST));
