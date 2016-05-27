@@ -200,41 +200,39 @@ class ident_switch extends rcube_plugin
 		}
 
 		// Check field values
-		$noErrors = false;
+		$errMsg = '';
 
 		$fLabel = self::ntrim(get_input_value('_ident_switch_form_label', RCUBE_INPUT_POST));
 		if (strlen($fLabel) > 32)
-			$rc->output->show_message('ident_switch.err.label.long', 'error');
+			$errMsg = 'label.long';
 		else
 		{
 			$fHost = self::ntrim(get_input_value('_ident_switch_form_host', RCUBE_INPUT_POST));
 			if (strlen($fHost) > 64)
-				$rc->output->show_message('ident_switch.err.host.long', 'error');
+				$errMsg = 'host.long';
 			else
 			{
 				$fPort = self::ntrim(get_input_value('_ident_switch_form_port', RCUBE_INPUT_POST));
 				if ($fPort && !ctype_digit($fPort))
-					$rc->output->show_message('ident_switch.err.port.num', 'error');
+					$errMsg = 'port.num';
 				else
 				{
 					if ($fPort && ($fPort <= 0 || $fPort > 65535))
-						$rc->output->show_message('ident_switch.err.port.range', 'error');
+						$errMsg = 'port.range';
 					else
 					{
 						$fUser = self::ntrim(get_input_value('_ident_switch_form_username', RCUBE_INPUT_POST));
 						if (strlen($fUser) > 64)
-							$rc->output->show_message('ident_switch.err.user.long', 'error');
+							$errMsg = 'user.long';
 						else
 						{
 							if (!$fUser)
-								$rc->output->show_message('ident_switch.err.user.empty', 'error');
+								$errMsg = 'user.empty';
 							else
 							{
 								$fDelim = self::ntrim(get_input_value('_ident_switch_form_delimiter', RCUBE_INPUT_POST));
 								if (strlen($fDelim) > 1)
-									$rc->output->show_message('ident_switch.err.delim.long', 'error');
-								else
-									$noErrors = true;
+									$errMsg = 'delim.long';
 							}
 						}
 					}
@@ -242,9 +240,10 @@ class ident_switch extends rcube_plugin
 			}
 		}
 
-		if (!$noErrors)
+		if ($errMsg)
 		{
 			$this->add_texts('localization');
+			$rc->output->show_message('ident_switch.err.' . $errMsg, 'error');
 			$args['abort'] = true;
 			return $args;
 		}
