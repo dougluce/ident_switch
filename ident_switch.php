@@ -186,8 +186,18 @@ class ident_switch extends rcube_plugin
 		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
 			return $args;
 
+		// Process boolean fields
+		$flags = 0;
+		if (get_input_value('_ident_switch_form_enabled', RCUBE_INPUT_POST))
+			$flags |= $this->db_enabled;
+		if (get_input_value('_ident_switch_form_secure', RCUBE_INPUT_POST))
+			$flags |= $this->db_secure;
 
-		$this->add_texts('localization');
+		if (!($flags & $this->db_enabled))
+		{
+			$this->sw_imap_off($args['iid']);
+			return $args;
+		}
 
 		// Check field values
 		$noErrors = false;
@@ -234,7 +244,7 @@ class ident_switch extends rcube_plugin
 
 		if (!$noErrors)
 		{
-			//$rc->output->send();
+			$this->add_texts('localization');
 			$args['abort'] = true;
 			return $args;
 		}
@@ -248,37 +258,33 @@ class ident_switch extends rcube_plugin
 				$rc->db->table_name($this->table) .
 				' SET flags = ?, label = ?, host = ?, port = ?, username = ?, password = ?, delimiter = ?, user_id = ?, iid = ?';
 		}
-		else
+		else if ($flags & $this->db_enabled)
 		{ // No record exists, create new one
 			$sql = 'INSERT INTO ' .
 				$rc->db->table_name($this->table) .
 				'(flags, label, host, port, username, password, delimiter, user_id, iid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
 		}
 
-		// Process boolean fields
-		$flags = 0;
-		if (get_input_value('_ident_switch_form_enabled', RCUBE_INPUT_POST))
-			$flags |= $this->db_enabled;
-		if (get_input_value('_ident_switch_form_secure', RCUBE_INPUT_POST))
-			$flags |= $this->db_secure;
+		if ($sql)
+		{
+			// Do we need to update pwd?
+			$fPass = get_input_value('_ident_switch_form_password', RCUBE_INPUT_POST);
+			if ($fPass != $r['password'])
+				$fPass = $rc->encrypt($fPass);
 
-		// Do we need to update pwd?
-		$fPass = get_input_value('_ident_switch_form_password', RCUBE_INPUT_POST);
-		if ($fPass != $r['password'])
-			$fPass = $rc->encrypt($fPass);
-
-		$rc->db->query(
-			$sql,
-			$flags,
-			$fLabel,
-			$fHost,
-			$fPort,
-			$fUser,
-			$fPass,
-			$fDelim,
-			$rc->user->ID,
-			$args['id']
-		);
+			$rc->db->query(
+				$sql,
+				$flags,
+				$fLabel,
+				$fHost,
+				$fPort,
+				$fUser,
+				$fPass,
+				$fDelim,
+				$rc->user->ID,
+				$args['id']
+			);
+		}
 
 		return $args;
 	}
@@ -395,6 +401,14 @@ class ident_switch extends rcube_plugin
 				'_mbox' => rcube_utils::get_input_value('_mbox', RCUBE_INPUT_GET),
 			)
 		);
+	}
+
+	protected function sw_imap_off($iid)
+	{
+		$rc = rcmail::get_instance();
+		
+		$sql = 'UPDATE ' . $rc->db->table_name($this->table) . ' SET flags = flags & ? WHERE iid = ? AND user_id = ?';
+		$rc->db->query($sql, ~$this->db_enabled, $iid, $rc->user->ID);
 	}
 
 	protected static function ntrim($str)
