@@ -248,14 +248,15 @@ class ident_switch extends rcube_plugin
 			return $args;
 		}
 
-		$sql = 'SELECT password FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
+		$sql = 'SELECT id, password FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
 		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
 		$r = $rc->db->fetch_assoc($q);
 		if ($r)
 		{ // Record already exists, will update it
 			$sql = 'UPDATE ' .
 				$rc->db->table_name($this->table) .
-				' SET flags = ?, label = ?, host = ?, port = ?, username = ?, password = ?, delimiter = ?, user_id = ?, iid = ?';
+				' SET flags = ?, label = ?, host = ?, port = ?, username = ?, password = ?, delimiter = ?, user_id = ?, iid = ?' .
+				' WHERE id = ?';
 		}
 		else if ($flags & $this->db_enabled)
 		{ // No record exists, create new one
@@ -281,7 +282,8 @@ class ident_switch extends rcube_plugin
 				$fPass,
 				$fDelim,
 				$rc->user->ID,
-				$args['id']
+				$args['id'],
+				$r['id']
 			);
 		}
 
