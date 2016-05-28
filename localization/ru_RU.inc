@@ -17,7 +17,7 @@ $labels['form.label'] = 'Название';
 $labels['form.host'] = 'Адрес сервера';
 
 // Secure connection (SSL/TLS)
-$labels['form.secure'] = 'Безопасное соединение (SSL/TLS)';
+$labels['form.secure'] = 'Защита подключения';
 
 // Port
 $labels['form.port'] = 'Порт';

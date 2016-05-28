@@ -17,8 +17,9 @@ class ident_switch extends rcube_plugin
 	private $my_log = 'ident_switch';
 
 	// Flags user in database
-	private $db_enabled = 1;
-	private $db_secure = 2;
+	private $db_enabled		= 1;
+	private $db_secure_ssl	= 2;
+	private $db_secure_tls	= 4;
 
 	function init()
 	{
@@ -149,7 +150,7 @@ class ident_switch extends rcube_plugin
 				'ident_switch.form.enabled' => array('type' => 'checkbox', 'onchange' => 'plugin_switchIdent_enabled_onChange();'),
 				'ident_switch.form.label' => array('type' => 'text', 'size' => 32),
 				'ident_switch.form.host' => array('type' => 'text', 'size' => 64),
-				'ident_switch.form.secure' => array('type' => 'checkbox'),
+				'ident_switch.form.secure' => array('type' => 'select', 'options' => array('ssl' => 'SSL', 'tls' => 'TLS')),
 				'ident_switch.form.port' => array('type' => 'text', 'size' => 5),
 				'ident_switch.form.username' => array('type' => 'text', 'size' => 64),
 				'ident_switch.form.password' => array('type' => 'password', 'size' => 64),
@@ -171,8 +172,10 @@ class ident_switch extends rcube_plugin
 				// Parse flags
 				if ($r['flags'] & $this->db_enabled)
 					$args['record']['ident_switch.form.enabled'] = true;
-				if ($r['flags'] & $this->db_secure)
-					$args['record']['ident_switch.form.secure'] = true;
+				if ($r['flags'] & $this->db_secure_tls) // TLS has priority
+					$args['record']['ident_switch.form.secure'] = 'tls';
+				elseif ($r['flags'] & $this->db_secure_ssl)
+					$args['record']['ident_switch.form.secure'] = 'ssl';
 			}
 		}
 
@@ -191,8 +194,6 @@ class ident_switch extends rcube_plugin
 		$flags = 0;
 		if (get_input_value('_ident_switch_form_enabled', RCUBE_INPUT_POST))
 			$flags |= $this->db_enabled;
-		if (get_input_value('_ident_switch_form_secure', RCUBE_INPUT_POST))
-			$flags |= $this->db_secure;
 
 		if (!($flags & $this->db_enabled))
 		{
@@ -248,6 +249,13 @@ class ident_switch extends rcube_plugin
 			$args['abort'] = true;
 			return $args;
 		}
+
+		// Parse secure settings
+		$ssl = get_input_value('_ident_switch_form_secure', RCUBE_INPUT_POST);
+		if (strcasecmp($ssl, 'tls') === 0)
+			$flags |= $this->db_secure_tls;
+		elseif (strcasecmp($ssl, 'ssl') === 0)
+			$flags |= $this->db_secure_ssl;
 
 		$sql = 'SELECT id, password FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
 		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
@@ -354,16 +362,22 @@ class ident_switch extends rcube_plugin
 					'Switching mailbox to one for identity with ID = ' . $r['iid'] . ' (username = \'' . $r['username'] . '\').'
 				);
 
-				$port = $r['port'];
-				$ssl = false;
-				if ($r['flags'] & $this->db_secure)
+				$def_port = 143; // Default port here!
+				$ssl = null;
+				if ($r['flags'] & $this->db_secure_tls)
 				{
-					$ssl = true;
-					if (!$port)
-						$port = 993; // Default SSL/TLS port here!
+					$ssl = 'tls';
+					$def_port = 143; // Default TLS port here!
 				}
+				elseif ($r['flags'] & $this->db_secure_ssl)
+				{
+					$ssl = 'ssl';
+					$def_port = 993; // Default SSL port here!
+				}
+
+				$port = $r['port'];
 				if (!$port)
-					$port = 143; // Default port here!
+					$port = $def_port;
 
 				// If we are in default account now
 				// save everything with STORAGE

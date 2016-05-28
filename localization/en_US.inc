@@ -17,7 +17,7 @@ $labels['form.label'] = 'Label';
 $labels['form.host']='Server host name';
 
 // Secure connection (SSL/TLS)
-$labels['form.secure']='Secure connection (SSL/TLS)';
+$labels['form.secure']='Connection security';
 
 // Port
 $labels['form.port']='Port';
