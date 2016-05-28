@@ -14,6 +14,7 @@ class ident_switch extends rcube_plugin
 
 	private $table = 'ident_switch';
 	private $my_postfix = '_iswitch';
+	private $my_log = 'ident_switch';
 
 	// Flags user in database
 	private $db_enabled = 1;
