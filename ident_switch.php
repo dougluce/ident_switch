@@ -59,14 +59,25 @@ class ident_switch extends rcube_plugin
 		$rc = rcmail::get_instance();
 		error_log('Template: ' . $args['template']);
 
+		// Currently selected identity
+		$iid = $_SESSION['iid' . $this->my_postfix];
+
+		$iid_int = 0;
+		if (is_int($iid))
+			$iid_int = $iid;
+		elseif ($iid === '-1')
+			$iid_int = -1;
+		elseif (ctype_digit($iid))
+			$iid_int = intval($iid);
+
 		// Get list of alternative accounts
 		$sOpt = '';
-		$sql = 'SELECT id, label, username FROM ' . $rc->db->table_name($this->table) . ' WHERE user_id = ? AND flags & ? > 0';
+		$sql = 'SELECT id, iid, label, username FROM ' . $rc->db->table_name($this->table) . ' WHERE user_id = ? AND flags & ? > 0';
 		$q = $rc->db->query($sql, $rc->user->data['user_id'], $this->db_enabled);
 		while ($r = $rc->db->fetch_assoc($q))
 		{
 			$opts = array('value' => $r['id']);
-			if (strcasecmp($_SESSION['username'], $r['username']) === 0)
+			if ($iid_int == $r['iid'])
 				$opts['selected'] = 'selected';
 
 			// Make label
@@ -91,7 +102,7 @@ class ident_switch extends rcube_plugin
 		{
 			// Add main account
 			$opts = array('value' => -1);
-			if (strcasecmp($_SESSION['username'], $rc->user->data['username']) === 0)
+			if (!$iid || $iid_int == -1)
 				$opts['selected'] = 'selected';
 
 			$sOpt = html::tag(
