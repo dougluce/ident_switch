@@ -398,12 +398,14 @@ class ident_switch extends rcube_plugin
 					{
 						if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $this->my_postfix, -$my_postfix_len, $my_postfix_len) !== 0)
 						{
-							$_SESSION[$k . $this->my_postfix] = $_SESSION[$k];
+							if (!$_SESSION[$k . $this->my_postfix])
+								$_SESSION[$k . $this->my_postfix] = $_SESSION[$k];
                             $rc->session->remove($k);
 						}
 					}
 				}
-				$_SESSION['password' . $this->my_postfix] = $_SESSION['password'];
+				if (!$_SESSION['password' . $this->my_postfix])
+					$_SESSION['password' . $this->my_postfix] = $_SESSION['password'];
 
 				$_SESSION['storage_host'] = $r['host'] ? $r['host'] : 'localhost'; // Default host here!
 				$_SESSION['storage_ssl'] = $ssl;
