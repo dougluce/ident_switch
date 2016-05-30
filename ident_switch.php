@@ -133,7 +133,7 @@ class ident_switch extends rcube_plugin
 
 		// TODO: Rewrite with full settings!
 
-		if (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 1)
+		if (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 0)
 		{
 			if ($args['smtp_user'] == '%u')
 				$args['smtp_user'] = $rc->user->data['username'];
