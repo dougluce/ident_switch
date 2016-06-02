@@ -84,6 +84,15 @@ class ident_switch extends rcube_plugin
 			$lbl = $r['label'];
 			if (!$lbl)
 			{
+				if (!$r['username'])
+				{ // Load email from identity
+					$sql = 'SELECT email FROM ' . $rc->db->table_name('identities') . ' WHERE identity_id = ?';
+					$q = $rc->db->query($sql, $r['iid']);
+					$rIid = $rc->db->fetch_assoc($q);
+
+					$r['username'] = $rIid['email'];
+				}
+
 				if (strpos($r['username'], '@') === false)
 					$lbl = $r['username'] . '@' . ($r['host'] ? $r['host'] : 'localhost');
 				else
@@ -167,7 +176,7 @@ class ident_switch extends rcube_plugin
 					'onchange' => 'plugin_switchIdent_secure_onChange();'
 				),
 				'ident_switch.form.port' => array('type' => 'text', 'size' => 5),
-				'ident_switch.form.username' => array('type' => 'text', 'size' => 64),
+				'ident_switch.form.username' => array('type' => 'text', 'size' => 64, 'placeholder' => $args['record']['email']),
 				'ident_switch.form.password' => array('type' => 'password', 'size' => 64),
 				'ident_switch.form.delimiter' => array('type' => 'text', 'size' => 1, 'placeholder' => '.'),
 			),
@@ -243,14 +252,9 @@ class ident_switch extends rcube_plugin
 							$errMsg = 'user.long';
 						else
 						{
-							if (!$fUser)
-								$errMsg = 'user.empty';
-							else
-							{
-								$fDelim = self::ntrim(get_input_value('_ident_switch_form_delimiter', RCUBE_INPUT_POST));
-								if (strlen($fDelim) > 1)
-									$errMsg = 'delim.long';
-							}
+							$fDelim = self::ntrim(get_input_value('_ident_switch_form_delimiter', RCUBE_INPUT_POST));
+							if (strlen($fDelim) > 1)
+								$errMsg = 'delim.long';
 						}
 					}
 				}
@@ -372,6 +376,15 @@ class ident_switch extends rcube_plugin
 			$r = $rc->db->fetch_assoc($q);
 			if (is_array($r))
 			{
+				if (!$r['username'])
+				{ // Load email from identity
+					$sql = 'SELECT email FROM ' . $rc->db->table_name('identities') . ' WHERE identity_id = ?';
+					$q = $rc->db->query($sql, $r['iid']);
+					$rIid = $rc->db->fetch_assoc($q);
+
+					$r['username'] = $rIid['email'];
+				}
+
 				$rc->write_log(
 					$this->my_log,
 					'Switching mailbox to one for identity with ID = ' . $r['iid'] . ' (username = \'' . $r['username'] . '\').'

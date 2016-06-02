@@ -31,9 +31,6 @@ $labels['form.password'] = 'Пароль';
 // Folder hierarchy delimiter
 $labels['form.delimiter'] = 'Разделитель в иерархии папок';
 
-// \'Username\' field in IMAP section cannot be empty.
-$labels['err.user.empty'] = '\'Имя пользователя\' в разделе IMAP не может быть пустым.';
-
 // Value in \'Label\' field of IMAP section is too long (32 chars max).
 $labels['err.label.long'] = '\'Название\' в разделе IMAP должно быть не длинее 32 символов.';
 
