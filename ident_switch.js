@@ -14,14 +14,23 @@ $(function() {
 		}
 	}
 
-	var $enFld = $("INPUT[name='_ident_switch.form.enabled']");
-	if ($enFld.size() == 1)
-		$enFld.change();
+	$("INPUT[name='_ident_switch.form.enabled']").change();
+	$("SELECT[name='_ident_switch.form.secure']").change();
 });
 
 function plugin_switchIdent_enabled_onChange(e) {
 	var $enFld = $("INPUT[name='_ident_switch.form.enabled']");
-	$("INPUT[name!='_ident_switch.form.enabled']", $enFld.parents("FIELDSET")).prop("disabled", !$enFld.is(":checked"));
+	$("INPUT[name!='_ident_switch.form.enabled'], SELECT", $enFld.parents("FIELDSET")).prop("disabled", !$enFld.is(":checked"));
+}
+
+function plugin_switchIdent_secure_onChange(e) {
+	var $secSel = $("SELECT[name='_ident_switch.form.secure']");
+	var $portFld = $("INPUT[name='_ident_switch.form.port']");
+
+	if ('SSL' === $secSel.val().toUpperCase())
+		$portFld.attr("placeholder", 993);
+	else
+		$portFld.attr("placeholder", 143);
 }
 
 function plugin_switchIdent_switch(val) {

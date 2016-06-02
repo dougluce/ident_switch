@@ -159,13 +159,17 @@ class ident_switch extends rcube_plugin
 			'name' => $this->gettext('form.caption'),
 			'content' => array(
 				'ident_switch.form.enabled' => array('type' => 'checkbox', 'onchange' => 'plugin_switchIdent_enabled_onChange();'),
-				'ident_switch.form.label' => array('type' => 'text', 'size' => 32),
-				'ident_switch.form.host' => array('type' => 'text', 'size' => 64),
-				'ident_switch.form.secure' => array('type' => 'select', 'options' => array('ssl' => 'SSL', 'tls' => 'TLS')),
+				'ident_switch.form.label' => array('type' => 'text', 'size' => 32, 'placeholder' => $args['record']['email']),
+				'ident_switch.form.host' => array('type' => 'text', 'size' => 64, 'placeholder' => 'localhost'),
+				'ident_switch.form.secure' => array(
+					'type' => 'select', 
+					'options' => array('ssl' => 'SSL', 'tls' => 'TLS'), 
+					'onchange' => 'plugin_switchIdent_secure_onChange();'
+				),
 				'ident_switch.form.port' => array('type' => 'text', 'size' => 5),
 				'ident_switch.form.username' => array('type' => 'text', 'size' => 64),
 				'ident_switch.form.password' => array('type' => 'password', 'size' => 64),
-				'ident_switch.form.delimiter' => array('type' => 'text', 'size' => 1),
+				'ident_switch.form.delimiter' => array('type' => 'text', 'size' => 1, 'placeholder' => '.'),
 			),
 		);
 
