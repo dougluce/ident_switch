@@ -39,7 +39,7 @@ class ident_switch extends rcube_plugin
 		$rc = rcmail::get_instance();
 		error_log('Task: ' . $args['task'] . ', action: ' . $args['action']);
 
-		if (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 1)
+		if (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 0)
 		{ // We are impersonating
 			$rc->config->set('imap_cache', null);
 			$rc->config->set('messages_cache', false);
