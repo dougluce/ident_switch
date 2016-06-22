@@ -179,6 +179,7 @@ class ident_switch extends rcube_plugin
 				'ident_switch.form.username' => array('type' => 'text', 'size' => 64, 'placeholder' => $args['record']['email']),
 				'ident_switch.form.password' => array('type' => 'password', 'size' => 64),
 				'ident_switch.form.delimiter' => array('type' => 'text', 'size' => 1, 'placeholder' => '.'),
+				'ident_switch.form.readonly' => array('type' => 'hidden'),
 			),
 		);
 
@@ -200,7 +201,18 @@ class ident_switch extends rcube_plugin
 					$args['record']['ident_switch.form.secure'] = 'tls';
 				elseif ($r['flags'] & $this->db_secure_ssl)
 					$args['record']['ident_switch.form.secure'] = 'ssl';
+
+				// Set readonly if needed
+				$cfg = $this->get_preconfig($args['record']['email']);
+				if (is_array($cfg) && $cfg['readonly'])
+				{
+					$args['record']['ident_switch.form.readonly'] = 1;
+					if (in_array(strtoupper($cfg['user']), array('EMAIL', 'MBOX')))
+						$args['record']['ident_switch.form.readonly'] = 2;
+				}
 			}
+			else
+				$this->apply_preconfig($args['record']);
 		}
 
 		return $args;
@@ -455,6 +467,79 @@ class ident_switch extends rcube_plugin
 		
 		$sql = 'UPDATE ' . $rc->db->table_name($this->table) . ' SET flags = flags & ? WHERE iid = ? AND user_id = ?';
 		$rc->db->query($sql, ~$this->db_enabled, $iid, $rc->user->ID);
+	}
+
+	protected function get_preconfig($email)
+	{
+		$dom = substr(strstr($email, '@'), 1);
+		if (!$dom)
+			return false;
+
+		//$this->load_config('config.inc.php.dist'); Don't need it yet
+		$this->load_config(); // config.inc.php
+
+		$cfg = rcmail::get_instance()->config->get('ident_switch.preconfig', array());
+		$cfg = $cfg[$dom];
+
+		if ($cfg)
+		{
+			if (!$cfg['host'])
+				return false; # Host must be specified!
+		}
+		return $cfg;
+	}
+
+	protected function apply_preconfig(&$record)
+	{
+		$email = $record['email'];
+		$cfg = $this->get_preconfig($email);
+		if (is_array($cfg))
+		{
+			rcmail::get_instance()->write_log(
+				$this->my_log,
+				'Applying predefined configuration for \'' . $email . '\'.'
+			);
+
+			if ($cfg['host'])
+			{ // Parse and set host and related
+				$urlArr = parse_url($cfg['host']);
+
+				$record['ident_switch.form.host'] = $urlArr['host'] ? rcube::Q($urlArr['host'], 'url') : '';
+				$record['ident_switch.form.port'] = $urlArr['port'] ? intval($urlArr['port']) : '';
+
+				if (strcasecmp('tls', $urlArr['scheme']) === 0)
+					$record['ident_switch.form.secure'] = 'tls';
+				elseif (strcasecmp('ssl', $urlArr['scheme']) === 0)
+					$record['ident_switch.form.secure'] = 'ssl';
+				else
+					$record['ident_switch.form.secure'] = '';
+			}
+
+			$loginSet = false;
+			if ($cfg['user'])
+			{ // Set up user name
+				switch (strtoupper($cfg['user']))
+				{
+				case 'EMAIL':
+					$record['ident_switch.form.username'] = $email;
+					$loginSet = true;
+					break;
+				case 'MBOX':
+					$record['ident_switch.form.username'] = strstr($email, '@', true);
+					$loginSet = true;
+					break;
+				}
+			}
+
+			if ($cfg['readonly'])
+			{
+				$record['ident_switch.form.readonly'] = 1;
+				if ($loginSet)
+					$record['ident_switch.form.readonly'] = 2;
+			}
+
+			return $cfg['readonly'];
+		}
 	}
 
 	protected static function ntrim($str)
