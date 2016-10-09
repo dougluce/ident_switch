@@ -369,12 +369,14 @@ class ident_switch extends rcube_plugin
 		{ // Switch to main account
 			$rc->write_log($this->my_log, 'Switching mailbox back to default.');
 
+			// Restore everything with STORAGE*my_postfix
 			foreach ($_SESSION as $k => $v)
 			{
 				if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $this->my_postfix, -$my_postfix_len, $my_postfix_len) === 0)
 				{
-					$_SESSION[$k] = $_SESSION[$k . $this->my_postfix];
-					$rc->session->remove($k . $this->my_postfix);
+					$realKey = substr($k, 0, -$my_postfix_len);
+					$_SESSION[$realKey] = $_SESSION[$k];
+					$rc->session->remove($k);
 				}
 			}
 			$_SESSION['username'] = $rc->user->data['username'];
