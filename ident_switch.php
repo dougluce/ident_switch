@@ -73,8 +73,8 @@ class ident_switch extends rcube_plugin
 		// Get list of alternative accounts
 		$sOpt = '';
 		$sql = 'SELECT id, iid, label, username FROM ' . $rc->db->table_name($this->table) . ' WHERE user_id = ? AND flags & ? > 0';
-		$q = $rc->db->query($sql, $rc->user->data['user_id'], $this->db_enabled);
-		while ($r = $rc->db->fetch_assoc($q))
+		$qRec = $rc->db->query($sql, $rc->user->data['user_id'], $this->db_enabled);
+		while ($r = $rc->db->fetch_assoc($qRec))
 		{
 			$opts = array('value' => $r['id']);
 			if ($iid_int == $r['iid'])
