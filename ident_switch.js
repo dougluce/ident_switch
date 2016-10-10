@@ -21,7 +21,10 @@ $(function() {
 });
 
 function plugin_switchIdent_processPreconfig() {
-	var disVal = $("INPUT[name='_ident_switch.form.readonly']").val();
+	var disFld = $("INPUT[name='_ident_switch.form.readonly']");
+	disFld.parentsUntil("TABLE", "TR").hide();
+
+	var disVal = disFld.val();
 	if (disVal > 0) {
 		$("INPUT[name='_ident_switch.form.host']").prop("disabled", true);
 		$("SELECT[name='_ident_switch.form.secure']").prop("disabled", true);
