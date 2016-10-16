@@ -53,8 +53,8 @@ function plugin_switchIdent_secure_onChange(e) {
 }
 
 function plugin_switchIdent_switch(val) {
-	console.log("qwe1");
-	rcmail.http_post('plugin.ident_switch.switch', { '_ident-id': val });
+	console.log(rcmail.env.mailbox);
+	rcmail.http_post('plugin.ident_switch.switch', { '_ident-id': val, '_mbox': rcmail.env.mailbox });
 }
 
 function  plugin_switchIdent_fixIdent(iid) {
