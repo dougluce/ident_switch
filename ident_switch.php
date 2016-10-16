@@ -226,7 +226,7 @@ class ident_switch extends rcube_plugin
 
 		// Process boolean fields
 		$flags = 0;
-		if (get_input_value('_ident_switch_form_enabled', RCUBE_INPUT_POST))
+		if (rcube_utils::get_input_value('_ident_switch_form_enabled', rcube_utils::INPUT_POST))
 			$flags |= $this->db_enabled;
 
 		if (!($flags & $this->db_enabled))
@@ -238,17 +238,17 @@ class ident_switch extends rcube_plugin
 		// Check field values
 		$errMsg = '';
 
-		$fLabel = self::ntrim(get_input_value('_ident_switch_form_label', RCUBE_INPUT_POST));
+		$fLabel = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_label', rcube_utils::INPUT_POST));
 		if (strlen($fLabel) > 32)
 			$errMsg = 'label.long';
 		else
 		{
-			$fHost = self::ntrim(get_input_value('_ident_switch_form_host', RCUBE_INPUT_POST));
+			$fHost = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_host', rcube_utils::INPUT_POST));
 			if (strlen($fHost) > 64)
 				$errMsg = 'host.long';
 			else
 			{
-				$fPort = self::ntrim(get_input_value('_ident_switch_form_port', RCUBE_INPUT_POST));
+				$fPort = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_port', rcube_utils::INPUT_POST));
 				if ($fPort && !ctype_digit($fPort))
 					$errMsg = 'port.num';
 				else
@@ -257,12 +257,12 @@ class ident_switch extends rcube_plugin
 						$errMsg = 'port.range';
 					else
 					{
-						$fUser = self::ntrim(get_input_value('_ident_switch_form_username', RCUBE_INPUT_POST));
+						$fUser = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_username', rcube_utils::INPUT_POST));
 						if (strlen($fUser) > 64)
 							$errMsg = 'user.long';
 						else
 						{
-							$fDelim = self::ntrim(get_input_value('_ident_switch_form_delimiter', RCUBE_INPUT_POST));
+							$fDelim = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_delimiter', rcube_utils::INPUT_POST));
 							if (strlen($fDelim) > 1)
 								$errMsg = 'delim.long';
 						}
@@ -280,7 +280,7 @@ class ident_switch extends rcube_plugin
 		}
 
 		// Parse secure settings
-		$ssl = get_input_value('_ident_switch_form_secure', RCUBE_INPUT_POST);
+		$ssl = rcube_utils::get_input_value('_ident_switch_form_secure', rcube_utils::INPUT_POST);
 		if (strcasecmp($ssl, 'tls') === 0)
 			$flags |= $this->db_secure_tls;
 		elseif (strcasecmp($ssl, 'ssl') === 0)
@@ -306,7 +306,7 @@ class ident_switch extends rcube_plugin
 		if ($sql)
 		{
 			// Do we need to update pwd?
-			$fPass = get_input_value('_ident_switch_form_password', RCUBE_INPUT_POST);
+			$fPass = rcube_utils::get_input_value('_ident_switch_form_password', rcube_utils::INPUT_POST);
 			if ($fPass != $r['password'])
 				$fPass = $rc->encrypt($fPass);
 
@@ -361,7 +361,7 @@ class ident_switch extends rcube_plugin
 		$rc = rcmail::get_instance();
 
 		$my_postfix_len = strlen($this->my_postfix);
-		$identId = rcube_utils::get_input_value('_ident-id', RCUBE_INPUT_POST);
+		$identId = rcube_utils::get_input_value('_ident-id', rcube_utils::INPUT_POST);
 
 		if (-1 == $identId)
 		{ // Switch to main account
