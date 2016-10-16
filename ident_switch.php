@@ -123,7 +123,7 @@ class ident_switch extends rcube_plugin
 				'select', 
 				array(
 					'id' => 'plugin-ident_switch-account',
-					'style' => 'display: none;',
+					'style' => 'display: none; padding: 0;',
 					'onchange' => 'plugin_switchIdent_switch(this.value);',
 				),
 				$sOpt
