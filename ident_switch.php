@@ -458,7 +458,7 @@ class ident_switch extends rcube_plugin
 		$rc->output->redirect(
 			array(
 				'_task' => 'mail',
-				'_mbox' => rcube_utils::get_input_value('_mbox', RCUBE_INPUT_GET),
+				'_mbox' => 'INBOX',
 			)
 		);
 	}
