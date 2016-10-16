@@ -37,7 +37,6 @@ class ident_switch extends rcube_plugin
 	function on_startup($args)
 	{
 		$rc = rcmail::get_instance();
-		error_log('Task: ' . $args['task'] . ', action: ' . $args['action']);
 
 		if (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 0)
 		{ // We are impersonating
@@ -57,7 +56,6 @@ class ident_switch extends rcube_plugin
 	function on_render_page($args)
 	{
 		$rc = rcmail::get_instance();
-		error_log('Template: ' . $args['template']);
 
 		// Currently selected identity
 		$iid = $_SESSION['iid' . $this->my_postfix];
