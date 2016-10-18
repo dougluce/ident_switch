@@ -25,7 +25,7 @@ $labels['form.port'] = 'Порт';
 // Username
 $labels['form.username'] = 'Имя пользователя';
 
-// Passwotrd
+// Password
 $labels['form.password'] = 'Пароль';
 
 // Folder hierarchy delimiter
@@ -47,4 +47,4 @@ $labels['err.delim.long'] = '\'Разделитель в иерархии пап
 $labels['err.port.num'] = '\'Порт\' в секции IMAP должен быть числом.';
 
 // Value in \'Port\' field of IMAP section must be between 1 and 65535.
-$labels['err.port.rtange'] = '\'Порт\' в секции IMAP должен быть в диапазоне от 1 до 65535.';
+$labels['err.port.range'] = '\'Порт\' в секции IMAP должен быть в диапазоне от 1 до 65535.';

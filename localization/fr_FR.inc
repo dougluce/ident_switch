@@ -25,7 +25,7 @@ $labels['form.port']='Port';
 // Username
 $labels['form.username'] = 'Nom d\'utilisateur';
 
-// Passwotrd
+// Password
 $labels['form.password'] = 'Mot de passe';
 
 // Folder hierarchy delimiter
@@ -47,4 +47,4 @@ $labels['err.delim.long'] = 'La valeur du champ \'Délimiteur de la hiérarchie 
 $labels['err.port.num'] = 'La valeur du champ \'Port\' de la section IMAP doit être un nombre.';
 
 // Value in \'Port\' field of IMAP section must be between 1 and 65535.
-$labels['err.port.rtange'] = 'La valeur du champ \'Port\' de la section IMAP doit être comprise entre 1 et 65535.';
+$labels['err.port.range'] = 'La valeur du champ \'Port\' de la section IMAP doit être comprise entre 1 et 65535.';
