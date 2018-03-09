@@ -12,14 +12,14 @@ class ident_switch extends rcube_plugin
 {
 	public $task='?(?!login|logout).*';
 
-	private $table = 'ident_switch';
-	private $my_postfix = '_iswitch';
-	private $my_log = 'ident_switch';
+	const TABLE = 'ident_switch';
+	const MY_POSTFIX = '_iswitch';
+	const MY_LOG = 'ident_switch';
 
 	// Flags user in database
-	private $db_enabled		= 1;
-	private $db_secure_ssl	= 2;
-	private $db_secure_tls	= 4;
+	const DB_ENABLED		= 1;
+	const DB_SECURE_SSL		= 2;
+	const DB_SECURE_TLS		= 4;
 
 	function init()
 	{
@@ -60,7 +60,7 @@ class ident_switch extends rcube_plugin
 		$rc = rcmail::get_instance();
 
 		// Currently selected identity
-		$iid = $_SESSION['iid' . $this->my_postfix];
+		$iid = $_SESSION['iid' . self::MY_POSTFIX];
 
 		$iid_int = 0;
 		if (is_int($iid))
@@ -72,8 +72,8 @@ class ident_switch extends rcube_plugin
 
 		// Get list of alternative accounts
 		$sOpt = '';
-		$sql = 'SELECT id, iid, label, username FROM ' . $rc->db->table_name($this->table) . ' WHERE user_id = ? AND flags & ? > 0';
-		$qRec = $rc->db->query($sql, $rc->user->data['user_id'], $this->db_enabled);
+		$sql = 'SELECT id, iid, label, username FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE user_id = ? AND flags & ? > 0';
+		$qRec = $rc->db->query($sql, $rc->user->data['user_id'], self::DB_ENABLED);
 		while ($r = $rc->db->fetch_assoc($qRec))
 		{
 			$opts = array('value' => $r['id']);
@@ -147,7 +147,7 @@ class ident_switch extends rcube_plugin
 			if ($args['smtp_user'] == '%u')
 				$args['smtp_user'] = $rc->user->data['username'];
 			if ($args['smtp_pass'] == '%p')
-				$args['smtp_pass'] = $rc->decrypt($_SESSION['password' . $this->my_postfix]);
+				$args['smtp_pass'] = $rc->decrypt($_SESSION['password' . self::MY_POSTFIX]);
 		}
 
 		return $args;
@@ -186,7 +186,7 @@ class ident_switch extends rcube_plugin
 		// Load data if exists
 		if (isset($args['record']['identity_id']))
 		{
-			$sql = 'SELECT * FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
+			$sql = 'SELECT * FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
 			$q = $rc->db->query($sql, $args['record']['identity_id'], $rc->user->ID);
 			$r = $rc->db->fetch_assoc($q);
 			if ($r)
@@ -195,11 +195,11 @@ class ident_switch extends rcube_plugin
 					$args['record']['ident_switch.form.' . $k] = $v;
 
 				// Parse flags
-				if ($r['flags'] & $this->db_enabled)
+				if ($r['flags'] & self::DB_ENABLED)
 					$args['record']['ident_switch.form.enabled'] = true;
-				if ($r['flags'] & $this->db_secure_tls) // TLS has priority
+				if ($r['flags'] & self::DB_SECURE_TLS) // TLS has priority
 					$args['record']['ident_switch.form.secure'] = 'tls';
-				elseif ($r['flags'] & $this->db_secure_ssl)
+				elseif ($r['flags'] & self::DB_SECURE_SSL)
 					$args['record']['ident_switch.form.secure'] = 'ssl';
 
 				// Set readonly if needed
@@ -269,7 +269,7 @@ class ident_switch extends rcube_plugin
 		}
 
 		// Save data for _after (cannot pass with $args)
-		$_SESSION['createData' . $this->my_postfix] = $data;
+		$_SESSION['createData' . self::MY_POSTFIX] = $data;
 
 		return $args;
 	}
@@ -282,9 +282,9 @@ class ident_switch extends rcube_plugin
 		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
 			return $args;
 
-		$data = $_SESSION['createData' . $this->my_postfix];
+		$data = $_SESSION['createData' . self::MY_POSTFIX];
 
-		unset($_SESSION['createData' . $this->my_postfix]);
+		unset($_SESSION['createData' . self::MY_POSTFIX]);
 		if (!$data || count($data) == 0)
 			$rc->write_log($this->my_log, 'Object with ident_switch values not found in session for ID = ' . $args['id'] . '.');
 		else
@@ -300,7 +300,7 @@ class ident_switch extends rcube_plugin
 	{
 		$rc = rcmail::get_instance();
 
-		$sql = 'DELETE FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
+		$sql = 'DELETE FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
 		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
 
 		if ($rc->db->affected_rows($q))
@@ -316,8 +316,8 @@ class ident_switch extends rcube_plugin
 			$rc = rcmail::get_instance();
 			if (strcasecmp($_SESSION['username'], $rc->user->data['username']) !== 0)
 			{
-				if (isset($_SESSION['iid' . $this->my_postfix]))
-					$rc->output->add_script('plugin_switchIdent_fixIdent(' . $_SESSION['iid' . $this->my_postfix] . ');', 'docready');
+				if (isset($_SESSION['iid' . self::MY_POSTFIX]))
+					$rc->output->add_script('plugin_switchIdent_fixIdent(' . $_SESSION['iid' . self::MY_POSTFIX] . ');', 'docready');
 				else
 					$rc->write_log($this->my_log, 'Special session variable with active identity ID not found.');
 			}
@@ -365,12 +365,12 @@ class ident_switch extends rcube_plugin
 		$retVal['pass'] = rcube_utils::get_input_value('_ident_switch_form_password', rcube_utils::INPUT_POST);
 
 		// Parse secure settings
-		$retVal['flags'] = $this->db_enabled;
+		$retVal['flags'] = self::DB_ENABLED;
 		$ssl = rcube_utils::get_input_value('_ident_switch_form_secure', rcube_utils::INPUT_POST);
 		if (strcasecmp($ssl, 'tls') === 0)
-			$retVal['flags'] |= $this->db_secure_tls;
+			$retVal['flags'] |= self::DB_SECURE_TLS;
 		elseif (strcasecmp($ssl, 'ssl') === 0)
-			$retVal['flags'] |= $this->db_secure_ssl;
+			$retVal['flags'] |= self::DB_SECURE_SSL;
 
 		return $retVal;
 	}
@@ -378,20 +378,20 @@ class ident_switch extends rcube_plugin
 
 	function save_field_values($rc, $data)
 	{
-		$sql = 'SELECT id, password FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
+		$sql = 'SELECT id, password FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
 		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
 		$r = $rc->db->fetch_assoc($q);
 		if ($r)
 		{ // Record already exists, will update it
 			$sql = 'UPDATE ' .
-				$rc->db->table_name($this->table) .
+				$rc->db->table_name(self::TABLE) .
 				' SET flags = ?, label = ?, host = ?, port = ?, username = ?, password = ?, delimiter = ?, user_id = ?, iid = ?' .
 				' WHERE id = ?';
 		}
-		else if ($data['flags'] & $this->db_enabled)
+		else if ($data['flags'] & self::DB_ENABLED)
 		{ // No record exists, create new one
 			$sql = 'INSERT INTO ' .
-				$rc->db->table_name($this->table) .
+				$rc->db->table_name(self::TABLE) .
 				'(flags, label, host, port, username, password, delimiter, user_id, iid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
 		}
 
@@ -425,7 +425,7 @@ class ident_switch extends rcube_plugin
 	{
 		$rc = rcmail::get_instance();
 
-		$my_postfix_len = strlen($this->my_postfix);
+		$my_postfix_len = strlen(self::MY_POSTFIX);
 		$identId = rcube_utils::get_input_value('_ident-id', rcube_utils::INPUT_POST);
 
 		if (-1 == $identId)
@@ -435,7 +435,7 @@ class ident_switch extends rcube_plugin
 			// Restore everything with STORAGE*my_postfix
 			foreach ($_SESSION as $k => $v)
 			{
-				if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $this->my_postfix, -$my_postfix_len, $my_postfix_len) === 0)
+				if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, self::MY_POSTFIX, -$my_postfix_len, $my_postfix_len) === 0)
 				{
 					$realKey = substr($k, 0, -$my_postfix_len);
 					$_SESSION[$realKey] = $_SESSION[$k];
@@ -443,12 +443,12 @@ class ident_switch extends rcube_plugin
 				}
 			}
 			$_SESSION['username'] = $rc->user->data['username'];
-			$_SESSION['password'] = $_SESSION['password' . $this->my_postfix];
-			$_SESSION['iid' . $this->my_postfix] = -1;
+			$_SESSION['password'] = $_SESSION['password' . self::MY_POSTFIX];
+			$_SESSION['iid' . self::MY_POSTFIX] = -1;
 		}
 		else
 		{
-			$sql = 'SELECT host, flags, port, username, password, iid FROM ' . $rc->db->table_name($this->table) . ' WHERE id = ? AND user_id = ?';
+			$sql = 'SELECT host, flags, port, username, password, iid FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE id = ? AND user_id = ?';
 			$q = $rc->db->query($sql, $identId ,$rc->user->ID);
 			$r = $rc->db->fetch_assoc($q);
 			if (is_array($r))
@@ -469,12 +469,12 @@ class ident_switch extends rcube_plugin
 
 				$def_port = 143; // Default port here!
 				$ssl = null;
-				if ($r['flags'] & $this->db_secure_tls)
+				if ($r['flags'] & self::DB_SECURE_TLS)
 				{
 					$ssl = 'tls';
 					$def_port = 143; // Default TLS port here!
 				}
-				elseif ($r['flags'] & $this->db_secure_ssl)
+				elseif ($r['flags'] & self::DB_SECURE_SSL)
 				{
 					$ssl = 'ssl';
 					$def_port = 993; // Default SSL port here!
@@ -490,23 +490,23 @@ class ident_switch extends rcube_plugin
 				{
 					foreach ($_SESSION as $k => $v)
 					{
-						if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, $this->my_postfix, -$my_postfix_len, $my_postfix_len) !== 0)
+						if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, self::MY_POSTFIX, -$my_postfix_len, $my_postfix_len) !== 0)
 						{
-							if (!$_SESSION[$k . $this->my_postfix])
-								$_SESSION[$k . $this->my_postfix] = $_SESSION[$k];
+							if (!$_SESSION[$k . self::MY_POSTFIX])
+								$_SESSION[$k . self::MY_POSTFIX] = $_SESSION[$k];
                             $rc->session->remove($k);
 						}
 					}
 				}
-				if (!$_SESSION['password' . $this->my_postfix])
-					$_SESSION['password' . $this->my_postfix] = $_SESSION['password'];
+				if (!$_SESSION['password' . self::MY_POSTFIX])
+					$_SESSION['password' . self::MY_POSTFIX] = $_SESSION['password'];
 
 				$_SESSION['storage_host'] = $r['host'] ? $r['host'] : 'localhost'; // Default host here!
 				$_SESSION['storage_ssl'] = $ssl;
 				$_SESSION['storage_port'] = $port;
 				$_SESSION['username'] = $r['username'];
 				$_SESSION['password'] = $r['password'];
-				$_SESSION['iid' . $this->my_postfix] = $r['iid'];
+				$_SESSION['iid' . self::MY_POSTFIX] = $r['iid'];
 
 				$rc->session->remove('folders');
 			}
@@ -530,8 +530,8 @@ class ident_switch extends rcube_plugin
 	{
 		$rc = rcmail::get_instance();
 		
-		$sql = 'UPDATE ' . $rc->db->table_name($this->table) . ' SET flags = flags & ? WHERE iid = ? AND user_id = ?';
-		$rc->db->query($sql, ~$this->db_enabled, $iid, $rc->user->ID);
+		$sql = 'UPDATE ' . $rc->db->table_name(self::TABLE) . ' SET flags = flags & ? WHERE iid = ? AND user_id = ?';
+		$rc->db->query($sql, ~self::DB_ENABLED, $iid, $rc->user->ID);
 	}
 
 	protected function get_preconfig($email)
