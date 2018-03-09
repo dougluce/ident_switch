@@ -28,6 +28,8 @@ class ident_switch extends rcube_plugin
 		$this->add_hook('smtp_connect', array($this, 'on_smtp_connect'));
 		$this->add_hook('identity_form', array($this, 'on_identity_form'));
 		$this->add_hook('identity_update', array($this, 'on_identity_update'));
+		$this->add_hook('identity_create', array($this, 'on_identity_create'));
+		$this->add_hook('identity_create_after', array($this, 'on_identity_create_after'));
 		$this->add_hook('identity_delete', array($this, 'on_identity_delete'));
 		$this->add_hook('template_object_composeheaders', array($this, 'on_template_object_composeheaders'));
 
@@ -157,7 +159,7 @@ class ident_switch extends rcube_plugin
 
 		// Do not show options for default identity
 		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
-			return $args;
+				return $args;
 
 		$this->add_texts('localization');
 
@@ -225,104 +227,70 @@ class ident_switch extends rcube_plugin
 			return $args;
 
 		// Process boolean fields
-		$flags = 0;
-		if (rcube_utils::get_input_value('_ident_switch_form_enabled', rcube_utils::INPUT_POST))
-			$flags |= $this->db_enabled;
-
-		if (!($flags & $this->db_enabled))
+		if (!rcube_utils::get_input_value('_ident_switch_form_enabled', rcube_utils::INPUT_POST))
 		{
 			$this->sw_imap_off($args['iid']);
 			return $args;
 		}
 
-		// Check field values
-		$errMsg = '';
-
-		$fLabel = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_label', rcube_utils::INPUT_POST));
-		if (strlen($fLabel) > 32)
-			$errMsg = 'label.long';
-		else
-		{
-			$fHost = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_host', rcube_utils::INPUT_POST));
-			if (strlen($fHost) > 64)
-				$errMsg = 'host.long';
-			else
-			{
-				$fPort = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_port', rcube_utils::INPUT_POST));
-				if ($fPort && !ctype_digit($fPort))
-					$errMsg = 'port.num';
-				else
-				{
-					if ($fPort && ($fPort <= 0 || $fPort > 65535))
-						$errMsg = 'port.range';
-					else
-					{
-						$fUser = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_username', rcube_utils::INPUT_POST));
-						if (strlen($fUser) > 64)
-							$errMsg = 'user.long';
-						else
-						{
-							$fDelim = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_delimiter', rcube_utils::INPUT_POST));
-							if (strlen($fDelim) > 1)
-								$errMsg = 'delim.long';
-						}
-					}
-				}
-			}
-		}
-
-		if ($errMsg)
+		$data = $this->check_field_values();
+		if ($data['err'])
 		{
 			$this->add_texts('localization');
-			$rc->output->show_message('ident_switch.err.' . $errMsg, 'error');
+			$rc->output->show_message('ident_switch.err.' . $data['err'], 'error');
 			$args['abort'] = true;
 			return $args;
 		}
 
-		// Parse secure settings
-		$ssl = rcube_utils::get_input_value('_ident_switch_form_secure', rcube_utils::INPUT_POST);
-		if (strcasecmp($ssl, 'tls') === 0)
-			$flags |= $this->db_secure_tls;
-		elseif (strcasecmp($ssl, 'ssl') === 0)
-			$flags |= $this->db_secure_ssl;
+		$data['id'] = $args['id'];
+		$this->save_field_values($rc, $data);
 
-		$sql = 'SELECT id, password FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
-		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
-		$r = $rc->db->fetch_assoc($q);
-		if ($r)
-		{ // Record already exists, will update it
-			$sql = 'UPDATE ' .
-				$rc->db->table_name($this->table) .
-				' SET flags = ?, label = ?, host = ?, port = ?, username = ?, password = ?, delimiter = ?, user_id = ?, iid = ?' .
-				' WHERE id = ?';
-		}
-		else if ($flags & $this->db_enabled)
-		{ // No record exists, create new one
-			$sql = 'INSERT INTO ' .
-				$rc->db->table_name($this->table) .
-				'(flags, label, host, port, username, password, delimiter, user_id, iid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-		}
+		return $args;
+	}
 
-		if ($sql)
+	function on_identity_create($args)
+	{
+		$rc = rcmail::get_instance();
+
+		// Do not do anything for default identity
+		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
+			return $args;
+
+		// Process boolean fields
+		if (!rcube_utils::get_input_value('_ident_switch_form_enabled', rcube_utils::INPUT_POST))
+				return $args;
+
+		$data = $this->check_field_values();
+		if ($data['err'])
 		{
-			// Do we need to update pwd?
-			$fPass = rcube_utils::get_input_value('_ident_switch_form_password', rcube_utils::INPUT_POST);
-			if ($fPass != $r['password'])
-				$fPass = $rc->encrypt($fPass);
+			$this->add_texts('localization');
+			$rc->output->show_message('ident_switch.err.' . $data['err'], 'error');
+			$args['abort'] = true;
+		}
 
-			$rc->db->query(
-				$sql,
-				$flags,
-				$fLabel,
-				$fHost,
-				$fPort,
-				$fUser,
-				$fPass,
-				$fDelim,
-				$rc->user->ID,
-				$args['id'],
-				$r['id']
-			);
+		// Save data for _after (cannot pass with $args)
+		$_SESSION['createData' . $this->my_postfix] = $data;
+
+		return $args;
+	}
+
+	function on_identity_create_after($args)
+	{
+		$rc = rcmail::get_instance();
+
+		// Do not do anything for default identity
+		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
+			return $args;
+
+		$data = $_SESSION['createData' . $this->my_postfix];
+
+		unset($_SESSION['createData' . $this->my_postfix]);
+		if (!$data || count($data) == 0)
+			$rc->write_log($this->my_log, 'Object with ident_switch values not found in session for ID = ' . $args['id'] . '.');
+		else
+		{
+			$data['id'] = $args['id'];
+			$this->save_field_values($rc, $data);
 		}
 
 		return $args;
@@ -354,6 +322,103 @@ class ident_switch extends rcube_plugin
 					$rc->write_log($this->my_log, 'Special session variable with active identity ID not found.');
 			}
 		}
+	}
+
+	function check_field_values()
+	{
+		$retVal = array();
+
+		$retVal['label'] = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_label', rcube_utils::INPUT_POST));
+		if (strlen($retVal['label']) > 32)
+			$retVal['err'] = 'label.long';
+		else
+		{
+			$retVal['host'] = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_host', rcube_utils::INPUT_POST));
+			if (strlen($retVal['host']) > 64)
+				$retVal['err'] = 'host.long';
+			else
+			{
+				$retVal['port'] = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_port', rcube_utils::INPUT_POST));
+				if ($retVal['port'] && !ctype_digit($retVal['port']))
+					$retVal['err'] = 'port.num';
+				else
+				{
+					if ($retVal['port'] && ($retVal['port'] <= 0 || $retVal['port'] > 65535))
+						$retVal['err'] = 'port.range';
+					else
+					{
+						$retVal['user'] = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_username', rcube_utils::INPUT_POST));
+						if (strlen($retVal['user']) > 64)
+							$retVal['err'] = 'user.long';
+						else
+						{
+							$retVal['delim'] = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_delimiter', rcube_utils::INPUT_POST));
+							if (strlen($retVal['delim']) > 1)
+								$retVal['err'] = 'delim.long';
+						}
+					}
+				}
+			}
+		}
+
+		// Get also password
+		$retVal['pass'] = rcube_utils::get_input_value('_ident_switch_form_password', rcube_utils::INPUT_POST);
+
+		// Parse secure settings
+		$retVal['flags'] = $this->db_enabled;
+		$ssl = rcube_utils::get_input_value('_ident_switch_form_secure', rcube_utils::INPUT_POST);
+		if (strcasecmp($ssl, 'tls') === 0)
+			$retVal['flags'] |= $this->db_secure_tls;
+		elseif (strcasecmp($ssl, 'ssl') === 0)
+			$retVal['flags'] |= $this->db_secure_ssl;
+
+		return $retVal;
+	}
+
+
+	function save_field_values($rc, $data)
+	{
+		$sql = 'SELECT id, password FROM ' . $rc->db->table_name($this->table) . ' WHERE iid = ? AND user_id = ?';
+		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
+		$r = $rc->db->fetch_assoc($q);
+		if ($r)
+		{ // Record already exists, will update it
+			$sql = 'UPDATE ' .
+				$rc->db->table_name($this->table) .
+				' SET flags = ?, label = ?, host = ?, port = ?, username = ?, password = ?, delimiter = ?, user_id = ?, iid = ?' .
+				' WHERE id = ?';
+		}
+		else if ($data['flags'] & $this->db_enabled)
+		{ // No record exists, create new one
+			$sql = 'INSERT INTO ' .
+				$rc->db->table_name($this->table) .
+				'(flags, label, host, port, username, password, delimiter, user_id, iid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+		}
+
+		if ($sql)
+		{
+			// Do we need to update pwd?
+			if ($data['pass'] != $r['password'])
+				$data['pass'] = $rc->encrypt($data['pass']);
+
+			$rc->db->query(
+				$sql,
+				$data['flags'],
+				$data['label'],
+				$data['host'],
+				$data['port'],
+				$data['user'],
+				$data['pass'],
+				$data['delim'],
+				$rc->user->ID,
+				$data['id'],
+				$r['id']
+			);
+
+			return true;
+		}
+
+		return false;
 	}
 
 	function on_switch()
