@@ -228,11 +228,11 @@ class ident_switch extends rcube_plugin
 		// Process boolean fields
 		if (!rcube_utils::get_input_value('_ident_switch_form_enabled', rcube_utils::INPUT_POST))
 		{
-			$this->sw_imap_off($args['iid']);
+			self::sw_imap_off($args['iid']);
 			return $args;
 		}
 
-		$data = $this->check_field_values();
+		$data = self::check_field_values();
 		if ($data['err'])
 		{
 			$this->add_texts('localization');
@@ -242,7 +242,7 @@ class ident_switch extends rcube_plugin
 		}
 
 		$data['id'] = $args['id'];
-		$this->save_field_values($rc, $data);
+		self::save_field_values($rc, $data);
 
 		return $args;
 	}
@@ -259,7 +259,7 @@ class ident_switch extends rcube_plugin
 		if (!rcube_utils::get_input_value('_ident_switch_form_enabled', rcube_utils::INPUT_POST))
 				return $args;
 
-		$data = $this->check_field_values();
+		$data = self::check_field_values();
 		if ($data['err'])
 		{
 			$this->add_texts('localization');
@@ -289,7 +289,7 @@ class ident_switch extends rcube_plugin
 		else
 		{
 			$data['id'] = $args['id'];
-			$this->save_field_values($rc, $data);
+			self::save_field_values($rc, $data);
 		}
 
 		return $args;
@@ -323,7 +323,7 @@ class ident_switch extends rcube_plugin
 		}
 	}
 
-	function check_field_values()
+	private static function check_field_values()
 	{
 		$retVal = array();
 
@@ -375,7 +375,7 @@ class ident_switch extends rcube_plugin
 	}
 
 
-	function save_field_values($rc, $data)
+	private static function save_field_values($rc, $data)
 	{
 		$sql = 'SELECT id, password FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
 		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
@@ -461,10 +461,7 @@ class ident_switch extends rcube_plugin
 					$r['username'] = $rIid['email'];
 				}
 
-				$rc->write_log(
-					self::MY_LOG,
-					'Switching mailbox to one for identity with ID = ' . $r['iid'] . ' (username = \'' . $r['username'] . '\').'
-				);
+				self::write_log('Switching mailbox to one for identity with ID = ' . $r['iid'] . ' (username = \'' . $r['username'] . '\').');
 
 				$def_port = 143; // Default port here!
 				$ssl = null;
@@ -525,7 +522,7 @@ class ident_switch extends rcube_plugin
 		);
 	}
 
-	protected function sw_imap_off($iid)
+	private static function sw_imap_off($iid)
 	{
 		$rc = rcmail::get_instance();
 		
@@ -533,13 +530,12 @@ class ident_switch extends rcube_plugin
 		$rc->db->query($sql, ~self::DB_ENABLED, $iid, $rc->user->ID);
 	}
 
-	protected function get_preconfig($email)
+	private function get_preconfig($email)
 	{
 		$dom = substr(strstr($email, '@'), 1);
 		if (!$dom)
 			return false;
 
-		//$this->load_config('config.inc.php.dist'); Don't need it yet
 		$this->load_config(); // config.inc.php
 
 		$cfg = rcmail::get_instance()->config->get('ident_switch.preconfig', array());
@@ -553,16 +549,13 @@ class ident_switch extends rcube_plugin
 		return $cfg;
 	}
 
-	protected function apply_preconfig(&$record)
+	private function apply_preconfig(&$record)
 	{
 		$email = $record['email'];
 		$cfg = $this->get_preconfig($email);
 		if (is_array($cfg))
 		{
-			rcmail::get_instance()->write_log(
-				self::MY_LOG,
-				'Applying predefined configuration for \'' . $email . '\'.'
-			);
+			self::write_log('Applying predefined configuration for \'' . $email . '\'.');
 
 			if ($cfg['host'])
 			{ // Parse and set host and related
@@ -606,7 +599,7 @@ class ident_switch extends rcube_plugin
 		}
 	}
 
-	protected static function ntrim($str)
+	private static function ntrim($str)
 	{
 		if (is_null($str))
 			return $str;
