@@ -236,8 +236,8 @@ class ident_switch extends rcube_plugin
 		if ($data['err'])
 		{
 			$this->add_texts('localization');
-			$rc->output->show_message('ident_switch.err.' . $data['err'], 'error');
 			$args['abort'] = true;
+			$args['message'] = 'ident_switch.err.' . $data['err'];
 			return $args;
 		}
 
@@ -263,8 +263,8 @@ class ident_switch extends rcube_plugin
 		if ($data['err'])
 		{
 			$this->add_texts('localization');
-			$rc->output->show_message('ident_switch.err.' . $data['err'], 'error');
 			$args['abort'] = true;
+			$args['message'] = 'ident_switch.err.' . $data['err'];
 		}
 
 		// Save data for _after (cannot pass with $args)
