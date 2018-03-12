@@ -378,7 +378,7 @@ class ident_switch extends rcube_plugin
 	private static function save_field_values($rc, $data)
 	{
 		$sql = 'SELECT id, password FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
-		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
+		$q = $rc->db->query($sql, $data['id'], $rc->user->ID);
 		$r = $rc->db->fetch_assoc($q);
 		if ($r)
 		{ // Record already exists, will update it
