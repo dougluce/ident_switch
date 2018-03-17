@@ -58,16 +58,31 @@ class ident_switch extends rcube_plugin
 	{
 		$rc = rcmail::get_instance();
 
-		// Currently selected identity
-		$iid = $_SESSION['iid' . self::MY_POSTFIX];
+		switch ($rc->task)
+		{
+		case 'mail':
+			$this->render_switch($rc, $args);
+		case 'settings':
+			$this->include_script('ident_switch-form.js');
+			break;
+		}
 
-		$iid_int = 0;
-		if (is_int($iid))
-			$iid_int = $iid;
-		elseif ($iid === '-1')
-			$iid_int = -1;
-		elseif (ctype_digit($iid))
-			$iid_int = intval($iid);
+
+		return $args;
+	}
+
+	private function render_switch($rc, $args)
+	{
+		// Currently selected identity
+		$iid_s = $_SESSION['iid' . self::MY_POSTFIX];
+
+		$iid = 0;
+		if (is_int($iid_s))
+			$iid = $iid_s;
+		elseif ($iid_s === '-1')
+			$iid = -1;
+		elseif (ctype_digit($iid_s))
+			$iid = intval($iid_s);
 
 		// Get list of alternative accounts
 		$sOpt = '';
@@ -76,7 +91,7 @@ class ident_switch extends rcube_plugin
 		while ($r = $rc->db->fetch_assoc($qRec))
 		{
 			$opts = array('value' => $r['id']);
-			if ($iid_int == $r['iid'])
+			if ($iid == $r['iid'])
 				$opts['selected'] = 'selected';
 
 			// Make label
@@ -110,7 +125,7 @@ class ident_switch extends rcube_plugin
 		{
 			// Add main account
 			$opts = array('value' => -1);
-			if (!$iid || $iid_int == -1)
+			if ($iid <= 0)
 				$opts['selected'] = 'selected';
 
 			$sOpt = html::tag(
@@ -119,7 +134,7 @@ class ident_switch extends rcube_plugin
 				$_SESSION['global_alias'] ? $_SESSION['global_alias'] : $rc->user->data['username']
 			) . $sOpt;
 
-			$this->include_script('ident_switch.js');
+			$this->include_script('ident_switch-switch.js');
 			$sw = html::tag(
 				'select', 
 				array(
@@ -131,8 +146,6 @@ class ident_switch extends rcube_plugin
 			);
 			$rc->output->add_footer($sw);
 		}
-
-		return $args;
 	}
 
 	function on_smtp_connect($args)
