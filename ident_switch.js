@@ -4,9 +4,9 @@
 
 $(function() {
 	var $truName = $('.topright .username');
-	if ($truName.size() > 0) {
+	if ($truName.length > 0) {
 		$sw = $('#plugin-ident_switch-account');
-		if ($sw.size() > 0) {
+		if ($sw.length > 0) {
 			$sw.prependTo('.topright');
 			$truName.hide();
 			$('#plugin-ident_switch-account').show();
