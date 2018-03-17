@@ -162,26 +162,6 @@ class ident_switch extends rcube_plugin
 
 		$this->add_texts('localization');
 
-		// Create our field set
-		$args['form']['ident_switch'] = array(
-			'name' => $this->gettext('form.caption'),
-			'content' => array(
-				'ident_switch.form.enabled' => array('type' => 'checkbox', 'onchange' => 'plugin_switchIdent_enabled_onChange();'),
-				'ident_switch.form.label' => array('type' => 'text', 'size' => 32, 'placeholder' => $args['record']['email']),
-				'ident_switch.form.host' => array('type' => 'text', 'size' => 64, 'placeholder' => 'localhost'),
-				'ident_switch.form.secure' => array(
-					'type' => 'select', 
-					'options' => array('ssl' => 'SSL', 'tls' => 'TLS'), 
-					'onchange' => 'plugin_switchIdent_secure_onChange();'
-				),
-				'ident_switch.form.port' => array('type' => 'text', 'size' => 5),
-				'ident_switch.form.username' => array('type' => 'text', 'size' => 64, 'placeholder' => $args['record']['email']),
-				'ident_switch.form.password' => array('type' => 'password', 'size' => 64),
-				'ident_switch.form.delimiter' => array('type' => 'text', 'size' => 1, 'placeholder' => '.'),
-				'ident_switch.form.readonly' => array('type' => 'hidden'),
-			),
-		);
-
 		// Load data if exists
 		if (isset($args['record']['identity_id']))
 		{
@@ -213,6 +193,52 @@ class ident_switch extends rcube_plugin
 			else
 				$this->apply_preconfig($args['record']);
 		}
+
+		// Create our field set
+		// Do that manually decause standard processing shows hidden fields (WTF?)
+		$fieldset = array(
+			'ident_switch.form.enabled' => array('type' => 'checkbox', 'onchange' => 'plugin_switchIdent_enabled_onChange();'),
+			'ident_switch.form.label' => array('type' => 'text', 'size' => 32, 'placeholder' => $args['record']['email']),
+			'ident_switch.form.host' => array('type' => 'text', 'size' => 64, 'placeholder' => 'localhost'),
+			'ident_switch.form.secure' => array(
+				'type' => 'select', 
+				'options' => array('ssl' => 'SSL', 'tls' => 'TLS'), 
+				'onchange' => 'plugin_switchIdent_secure_onChange();'
+			),
+			'ident_switch.form.port' => array('type' => 'text', 'size' => 5),
+			'ident_switch.form.username' => array('type' => 'text', 'size' => 64, 'placeholder' => $args['record']['email']),
+			'ident_switch.form.password' => array('type' => 'password', 'size' => 64),
+			'ident_switch.form.delimiter' => array('type' => 'text', 'size' => 1, 'placeholder' => '.'),
+			'ident_switch.form.readonly' => array('type' => 'hidden'),
+		);
+
+		// Process fields
+		$addAfter = '';
+		$table = new html_table(array('cols' => 2));
+		foreach ($fieldset as $col => $colprop)
+		{
+			$data = $args['record'][$col];
+			if ($colprop['type'] == 'hidden')
+			{
+				$addAfter .= rcube_output::get_edit_field($col, $data, $colprop, $colprop['type']);
+			}
+			else
+			{
+				$colprop['id'] = 'rcmfd_' . $col;
+
+				$label = $colprop['label'] ?: $this->gettext(str_replace('-', '', $col));
+                $value = $colprop['value'] ?: rcube_output::get_edit_field($col, $data, $colprop, $colprop['type']);
+
+				$table->add('title', html::label($colprop['id'], rcube::Q($label)));
+                $table->add(null, $value);
+			}
+		}
+
+		// Set data for output
+		$args['form']['ident_switch'] = array(
+			'name' => $this->gettext('form.caption'),
+			'content' => $table->show(array('class' => 'propform')) . $addAfter // TODO: copy styles from other tables
+		);
 
 		return $args;
 	}

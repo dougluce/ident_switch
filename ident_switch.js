@@ -15,13 +15,12 @@ $(function() {
 			break;
 	}
 
-	if (isOk) {
+	if (isOk)
 		$sw.show();
-		$("INPUT[name='_ident_switch.form.enabled']").change();
-		$("SELECT[name='_ident_switch.form.secure']").change();
 
-		plugin_switchIdent_processPreconfig();
-	}
+	$("INPUT[name='_ident_switch.form.enabled']").change();
+	$("SELECT[name='_ident_switch.form.secure']").change();
+	plugin_switchIdent_processPreconfig();
 });
 
 function plugin_switchIdent_addCbLarry($sw) {
