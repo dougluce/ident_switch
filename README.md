@@ -13,6 +13,6 @@ This plugin allows users to switch between different accounts (including remote)
 ### Version compatibility ###
 * Branch 1.X - for Roundcube v1.1
 * Branch 2.X - for Roundcube v1.2
-* Branch 3.X - for Roundcube v1.3 (coming soon).
+* Branch 3.X - for Roundcube v1.3
 
 Please specify verion like "~2.0" in your composer.json file for ident_switch requirement. In this case you will stay inside compatible branch until you manually update ypur Roundcube installation.
