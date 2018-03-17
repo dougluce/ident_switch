@@ -3,21 +3,50 @@
  */
 
 $(function() {
+	$sw = $('#plugin-ident_switch-account');
+	isOk = false;
+
+	switch (rcmail.env['skin']) {
+		case 'larry':
+			isOk = plugin_switchIdent_addCbLarry($sw);
+			break;
+		case 'classic':
+			isOk = plugin_switchIdent_addCbClassic($sw);
+			break;
+	}
+
+	if (isOk) {
+		$sw.show();
+		$("INPUT[name='_ident_switch.form.enabled']").change();
+		$("SELECT[name='_ident_switch.form.secure']").change();
+
+		plugin_switchIdent_processPreconfig();
+	}
+});
+
+function plugin_switchIdent_addCbLarry($sw) {
 	var $truName = $('.topright .username');
 	if ($truName.length > 0) {
-		$sw = $('#plugin-ident_switch-account');
 		if ($sw.length > 0) {
 			$sw.prependTo('.topright');
 			$truName.hide();
-			$('#plugin-ident_switch-account').show();
+
+			return true;
 		}
 	}
 
-	$("INPUT[name='_ident_switch.form.enabled']").change();
-	$("SELECT[name='_ident_switch.form.secure']").change();
+	return false;
+}
 
-	plugin_switchIdent_processPreconfig();
-});
+function plugin_switchIdent_addCbClassic($sw) {
+	var $taskBar = $('#taskbar');
+	if ($taskBar.length > 0) {
+		$taskBar.prepend($sw);
+		return true;
+	}
+
+	return false;
+}
 
 function plugin_switchIdent_processPreconfig() {
 	var disFld = $("INPUT[name='_ident_switch.form.readonly']");
