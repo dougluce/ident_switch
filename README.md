@@ -16,3 +16,6 @@ This plugin allows users to switch between different accounts (including remote)
 * Branch 3.X - for Roundcube v1.3
 
 Please specify verion like "~2.0" in your composer.json file for ident_switch requirement. In this case you will stay inside compatible branch until you manually update ypur Roundcube installation.
+
+### Switching SMTP ###
+Plugin also switched SMTP credentials but only for server specified in general config. You should use %u and %p substitutions for user and password to make it work. This substitutions are replaced by username and password for selected IMAP account.

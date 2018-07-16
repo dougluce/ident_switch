@@ -150,16 +150,29 @@ class ident_switch extends rcube_plugin
 
 	function on_smtp_connect($args)
 	{
+		$iid = $_SESSION['iid' . self::MY_POSTFIX];
+		if (!is_integer($iid) || $iid == -1)
+			return $args;
+
 		$rc = rcmail::get_instance();
 
-		// TODO: Rewrite with full settings!
-
-		if (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 0)
+		$sql = 'SELECT host, flags, port, username, password, iid FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
+		$q = $rc->db->query($sql, $iid ,$rc->user->ID);
+		$r = $rc->db->fetch_assoc($q);
+		if (is_array($r))
 		{
-			if ($args['smtp_user'] == '%u')
-				$args['smtp_user'] = $rc->user->data['username'];
-			if ($args['smtp_pass'] == '%p')
-				$args['smtp_pass'] = $rc->decrypt($_SESSION['password' . self::MY_POSTFIX]);
+			if (!$r['username'])
+			{ // Load email from identity
+				$sql = 'SELECT email FROM ' . $rc->db->table_name('identities') . ' WHERE identity_id = ?';
+				$q = $rc->db->query($sql, $r['iid']);
+				$rIid = $rc->db->fetch_assoc($q);
+
+				$r['username'] = $rIid['email'];
+			}
+
+			// Exactly the same in core SMTP handler
+			$args['smtp_user'] = str_replace('%u', $r['username'], $args['smtp_user']);
+			$args['smtp_pass'] = str_replace('%p', $rc->decrypt($r['password']), $args['smtp_pass']);
 		}
 
 		return $args;
