@@ -13,8 +13,7 @@ CREATE TABLE ident_switch
 		REFERENCES identities(identity_id) ON DELETE CASCADE ON UPDATE CASCADE
 		UNIQUE,
 	username
-		varchar(64)
-		NOT NULL,
+		varchar(64),
 	password
 		varchar(64),
 	host

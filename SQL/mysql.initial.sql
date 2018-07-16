@@ -11,8 +11,7 @@ CREATE TABLE IF NOT EXISTS ident_switch
 		int(10) UNSIGNED
 		NOT NULL,
 	username
-		varchar(64)
-		NOT NULL,
+		varchar(64),
 	password
 		varchar(64),
 	host
