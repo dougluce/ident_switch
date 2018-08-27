@@ -280,7 +280,7 @@ class ident_switch extends rcube_plugin
 		// Process boolean fields
 		if (!rcube_utils::get_input_value('_ident_switch_form_enabled', rcube_utils::INPUT_POST))
 		{
-			self::sw_imap_off($args['iid']);
+			self::sw_imap_off($args['id']);
 			return $args;
 		}
 
