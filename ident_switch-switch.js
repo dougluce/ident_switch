@@ -13,6 +13,9 @@ $(function() {
 		case 'classic':
 			isOk = plugin_switchIdent_addCbClassic($sw);
 			break;
+        case 'elastic':
+            isOk = plugin_switchIdent_addCbElastic($sw);
+            break;
 	}
 
 	if (isOk)
@@ -41,6 +44,19 @@ function plugin_switchIdent_addCbClassic($sw) {
 	}
 
 	return false;
+}
+
+function plugin_switchIdent_addCbElastic($sw) {
+    var $taskBar = $('.header-title.username');
+    $sw.css("background-color", "transparent").css("border","none");
+    $sw.css("background-position-x","left 0.75rem").css("padding","0 0 0 2rem");
+    $sw.css("font-weight","bold").css("box-shadow","none");
+    if ($taskBar.length > 0) {
+        $taskBar.prepend($sw);
+        return true;
+    }
+
+    return false;
 }
 
 function plugin_switchIdent_switch(val) {
