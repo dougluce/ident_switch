@@ -250,8 +250,8 @@ class ident_switch extends rcube_plugin
 				$record['ident_switch.form.' . $dbToForm[$k]] = $v;
 
 			// Parse flags
-			$record['ident_switch.form.common.enabled'] = $row['flags'] & self::DB_ENABLED;
-			$record['ident_switch.form.imap.tls'] = $row['flags'] & self::DB_SECURE_IMAP_TLS;
+			$record['ident_switch.form.common.enabled'] = !!($row['flags'] & self::DB_ENABLED);
+			$record['ident_switch.form.imap.tls'] = !!($row['flags'] & self::DB_SECURE_IMAP_TLS);
 
 			// Set readonly if needed
 			$cfg = $this->get_preconfig($record['email']);
