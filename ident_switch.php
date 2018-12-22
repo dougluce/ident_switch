@@ -390,8 +390,8 @@ class ident_switch extends rcube_plugin
 	{
 		$retVal = array();
 
-		$retVal['common.label'] = self::get_field_value('common', 'label');
-		if (strlen($retVal['common.label']) > 32)
+		$retVal['label'] = self::get_field_value('common', 'label');
+		if (strlen($retVal['label']) > 32)
 			$retVal['err'] = 'label.long';
 		else
 		{
