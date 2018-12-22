@@ -16,9 +16,9 @@ class ident_switch extends rcube_plugin
 	const MY_POSTFIX = '_iswitch';
 
 	// Flags user in database
-	const DB_ENABLED		= 1;
-	const DB_SECURE_SSL		= 2;
-	const DB_SECURE_TLS		= 4;
+	const DB_ENABLED		    = 1;
+	//const DB_SECURE_SSL		= 2; // Not supported any more
+	const DB_SECURE_IMAP_TLS	= 4;
 
 	function init()
 	{
@@ -62,6 +62,7 @@ class ident_switch extends rcube_plugin
 		{
 		case 'mail':
 			$this->render_switch($rc, $args);
+			break;
 		case 'settings':
 			$this->include_script('ident_switch-form.js');
 			break;
@@ -156,7 +157,7 @@ class ident_switch extends rcube_plugin
 
 		$rc = rcmail::get_instance();
 
-		$sql = 'SELECT host, flags, port, username, password, iid FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
+		$sql = 'SELECT smtp_host, flags, smtp_port, username, password FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
 		$q = $rc->db->query($sql, $iid ,$rc->user->ID);
 		$r = $rc->db->fetch_assoc($q);
 		if (is_array($r))
@@ -164,18 +165,52 @@ class ident_switch extends rcube_plugin
 			if (!$r['username'])
 			{ // Load email from identity
 				$sql = 'SELECT email FROM ' . $rc->db->table_name('identities') . ' WHERE identity_id = ?';
-				$q = $rc->db->query($sql, $r['iid']);
+				$q = $rc->db->query($sql, $iid);
 				$rIid = $rc->db->fetch_assoc($q);
 
 				$r['username'] = $rIid['email'];
 			}
 
-			// Exactly the same in core SMTP handler
-			$args['smtp_user'] = str_replace('%u', $r['username'], $args['smtp_user']);
-			$args['smtp_pass'] = str_replace('%p', $rc->decrypt($r['password']), $args['smtp_pass']);
+			$args['smtp_user'] = $r['username'];
+			$args['smtp_pass'] = $rc->decrypt($r['password']);
+			$args['smtp_server'] = $r['smtp_host'] ? $r['smtp_host'] : 'localhost'; // Default SMTP host here
+			$args['smtp_port'] = $r['smtp_port'] ? $r['smtp_port'] : 587; // Default SMTP port here
+
+			self::write_log(print_r($args, true));
 		}
 
 		return $args;
+	}
+
+	private static function get_common_form(&$record)
+	{
+		$prefix = 'ident_switch.form.common.';
+		return array(
+			$prefix . 'enabled' => array('type' => 'checkbox', 'onchange' => 'plugin_switchIdent_enabled_onChange();'),
+			$prefix . 'label' => array('type' => 'text', 'size' => 32, 'placeholder' => $record['email']),
+			$prefix . 'readonly' => array('type' => 'hidden'),
+		);
+	}
+
+	private static function get_imap_form(&$record)
+	{
+		$prefix = 'ident_switch.form.imap.';
+		return array(
+			$prefix . 'host' => array('type' => 'text', 'size' => 64, 'placeholder' => 'localhost'),
+			$prefix . 'port' => array('type' => 'text', 'size' => 5, 'placeholder' => 143),
+			$prefix . 'tls' => array('type' => 'checkbox'),
+			$prefix . 'username' => array('type' => 'text', 'size' => 64, 'placeholder' => $record['email']),
+			$prefix . 'password' => array('type' => 'password', 'size' => 64),
+		);
+	}
+
+	private static function get_smtp_form(&$record)
+	{
+		$prefix = 'ident_switch.form.smtp.';
+		return array(
+			$prefix . 'host' => array('type' => 'text', 'size' => 64, 'placeholder' => 'localhost'),
+			$prefix . 'port' => array('type' => 'text', 'size' => 5, 'placeholder' => 587),
+		);
 	}
 
 	function on_identity_form($args)
@@ -184,86 +219,63 @@ class ident_switch extends rcube_plugin
 
 		// Do not show options for default identity
 		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
-				return $args;
+			return $args;
 
 		$this->add_texts('localization');
 
-		// Load data if exists
+		$row = null;
 		if (isset($args['record']['identity_id']))
 		{
 			$sql = 'SELECT * FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
 			$q = $rc->db->query($sql, $args['record']['identity_id'], $rc->user->ID);
-			$r = $rc->db->fetch_assoc($q);
-			if ($r)
-			{
-				foreach ($r as $k => $v)
-					$args['record']['ident_switch.form.' . $k] = $v;
-
-				// Parse flags
-				if ($r['flags'] & self::DB_ENABLED)
-					$args['record']['ident_switch.form.enabled'] = true;
-				if ($r['flags'] & self::DB_SECURE_TLS) // TLS has priority
-					$args['record']['ident_switch.form.secure'] = 'tls';
-				elseif ($r['flags'] & self::DB_SECURE_SSL)
-					$args['record']['ident_switch.form.secure'] = 'ssl';
-
-				// Set readonly if needed
-				$cfg = $this->get_preconfig($args['record']['email']);
-				if (is_array($cfg) && $cfg['readonly'])
-				{
-					$args['record']['ident_switch.form.readonly'] = 1;
-					if (in_array(strtoupper($cfg['user']), array('EMAIL', 'MBOX')))
-						$args['record']['ident_switch.form.readonly'] = 2;
-				}
-			}
-			else
-				$this->apply_preconfig($args['record']);
+			$row = $rc->db->fetch_assoc($q);
 		}
 
-		// Create our field set
-		// Do that manually decause standard processing shows hidden fields (WTF?)
-		$fieldset = array(
-			'ident_switch.form.enabled' => array('type' => 'checkbox', 'onchange' => 'plugin_switchIdent_enabled_onChange();'),
-			'ident_switch.form.label' => array('type' => 'text', 'size' => 32, 'placeholder' => $args['record']['email']),
-			'ident_switch.form.host' => array('type' => 'text', 'size' => 64, 'placeholder' => 'localhost'),
-			'ident_switch.form.secure' => array(
-				'type' => 'select', 
-				'options' => array('ssl' => 'SSL', 'tls' => 'TLS'), 
-				'onchange' => 'plugin_switchIdent_secure_onChange();'
-			),
-			'ident_switch.form.port' => array('type' => 'text', 'size' => 5),
-			'ident_switch.form.username' => array('type' => 'text', 'size' => 64, 'placeholder' => $args['record']['email']),
-			'ident_switch.form.password' => array('type' => 'password', 'size' => 64),
-			'ident_switch.form.delimiter' => array('type' => 'text', 'size' => 1, 'placeholder' => '.'),
-			'ident_switch.form.readonly' => array('type' => 'hidden'),
-		);
+		$record = &$args['record'];
 
-		// Process fields
-		$addAfter = '';
-		$table = new html_table(array('cols' => 2));
-		foreach ($fieldset as $col => $colprop)
+		// Load data if exists
+		if ($row)
 		{
-			$data = $args['record'][$col];
-			if ($colprop['type'] == 'hidden')
-			{
-				$addAfter .= rcube_output::get_edit_field($col, $data, $colprop, $colprop['type']);
-			}
-			else
-			{
-				$colprop['id'] = 'rcmfd_' . $col;
+			$dbToForm = array(
+				'label' => 'common.label',
+				'imap_host' => 'imap.host',
+				'imap_port' => 'imap.port',
+				'username' => 'imap.username',
+				'password' => 'imap.password',
+				'smtp_host' => 'smtp.host',
+				'smtp_port' => 'smtp.port'
 
-				$label = $colprop['label'] ?: $this->gettext(str_replace('-', '', $col));
-                $value = $colprop['value'] ?: rcube_output::get_edit_field($col, $data, $colprop, $colprop['type']);
+			);
+			foreach ($row as $k => $v)
+				$record['ident_switch.form.' . $dbToForm[$k]] = $v;
 
-				$table->add('title', html::label($colprop['id'], rcube::Q($label)));
-                $table->add(null, $value);
+			// Parse flags
+			$record['ident_switch.form.common.enabled'] = $row['flags'] & self::DB_ENABLED;
+			$record['ident_switch.form.imap.tls'] = $row['flags'] & self::DB_SECURE_IMAP_TLS;
+
+			// Set readonly if needed
+			$cfg = $this->get_preconfig($record['email']);
+			if (is_array($cfg) && $cfg['readonly'])
+			{
+				$record['ident_switch.form.common.readonly'] = 1;
+				if (in_array(strtoupper($cfg['user']), array('EMAIL', 'MBOX')))
+					$record['ident_switch.form.common.readonly'] = 2;
 			}
 		}
+		else
+			$this->apply_preconfig($record);
 
-		// Set data for output
-		$args['form']['ident_switch'] = array(
-			'name' => $this->gettext('form.caption'),
-			'content' => $table->show(array('class' => 'propform')) . $addAfter // TODO: copy styles from other tables
+		$args['form']['ident_switch.common'] = array(
+			'name' => $this->gettext('form.common.caption'),
+			'content' => ident_switch::get_common_form($record)
+		);
+		$args['form']['ident_switch.imap'] = array(
+			'name' => $this->gettext('form.imap.caption'),
+			'content' => ident_switch::get_imap_form($record)
+		);
+		$args['form']['ident_switch.smtp'] = array(
+			'name' => $this->gettext('form.smtp.caption'),
+			'content' => ident_switch::get_smtp_form($record)
 		);
 
 		return $args;
@@ -277,8 +289,7 @@ class ident_switch extends rcube_plugin
 		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
 			return $args;
 
-		// Process boolean fields
-		if (!rcube_utils::get_input_value('_ident_switch_form_enabled', rcube_utils::INPUT_POST))
+		if (!self::get_field_value('common', 'enabled', false))
 		{
 			self::sw_imap_off($args['id']);
 			return $args;
@@ -307,8 +318,7 @@ class ident_switch extends rcube_plugin
 		if (strcasecmp($args['record']['email'], $rc->user->data['username']) === 0)
 			return $args;
 
-		// Process boolean fields
-		if (!rcube_utils::get_input_value('_ident_switch_form_enabled', rcube_utils::INPUT_POST))
+		if (!self::get_field_value('common', 'enabled', false))
 				return $args;
 
 		$data = self::check_field_values();
@@ -375,37 +385,49 @@ class ident_switch extends rcube_plugin
 		}
 	}
 
+
 	private static function check_field_values()
 	{
 		$retVal = array();
 
-		$retVal['label'] = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_label', rcube_utils::INPUT_POST));
-		if (strlen($retVal['label']) > 32)
+		$retVal['common.label'] = self::get_field_value('common', 'label');
+		if (strlen($retVal['common.label']) > 32)
 			$retVal['err'] = 'label.long';
 		else
 		{
-			$retVal['host'] = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_host', rcube_utils::INPUT_POST));
-			if (strlen($retVal['host']) > 64)
+			$retVal['imap.host'] = self::get_field_value('imap', 'host');
+			if (strlen($retVal['imap.host']) > 64)
 				$retVal['err'] = 'host.long';
 			else
 			{
-				$retVal['port'] = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_port', rcube_utils::INPUT_POST));
-				if ($retVal['port'] && !ctype_digit($retVal['port']))
+				$retVal['imap.port'] = self::get_field_value('imap', 'port');
+				if ($retVal['imap.port'] && !ctype_digit($retVal['imap.port']))
 					$retVal['err'] = 'port.num';
 				else
 				{
-					if ($retVal['port'] && ($retVal['port'] <= 0 || $retVal['port'] > 65535))
+					if ($retVal['imap.port'] && ($retVal['imap.port'] <= 0 || $retVal['imap.port'] > 65535))
 						$retVal['err'] = 'port.range';
 					else
 					{
-						$retVal['user'] = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_username', rcube_utils::INPUT_POST));
-						if (strlen($retVal['user']) > 64)
+						$retVal['imap.user'] = self::get_field_value('imap', 'username');
+						if (strlen($retVal['imap.user']) > 64)
 							$retVal['err'] = 'user.long';
 						else
 						{
-							$retVal['delim'] = self::ntrim(rcube_utils::get_input_value('_ident_switch_form_delimiter', rcube_utils::INPUT_POST));
-							if (strlen($retVal['delim']) > 1)
-								$retVal['err'] = 'delim.long';
+							$retVal['smtp.host'] = self::get_field_value('smtp', 'host');
+							if (strlen($retVal['smtp.host']) > 64)
+								$retVal['err'] = 'host.long';
+							else
+							{
+								$retVal['smtp.port'] = self::get_field_value('smtp', 'port');
+								if ($retVal['smtp.port'] && !ctype_digit($retVal['smtp.port']))
+									$retVal['err'] = 'port.num';
+								else
+								{
+									if ($retVal['smtp.port'] && ($retVal['smtp.port'] <= 0 || $retVal['smtp.port'] > 65535))
+										$retVal['err'] = 'port.range';
+								}
+							}
 						}
 					}
 				}
@@ -413,19 +435,29 @@ class ident_switch extends rcube_plugin
 		}
 
 		// Get also password
-		$retVal['pass'] = rcube_utils::get_input_value('_ident_switch_form_password', rcube_utils::INPUT_POST);
+		$retVal['imap.pass'] = self::get_field_value('imap', 'password', false);
 
 		// Parse secure settings
 		$retVal['flags'] = self::DB_ENABLED;
-		$ssl = rcube_utils::get_input_value('_ident_switch_form_secure', rcube_utils::INPUT_POST);
-		if (strcasecmp($ssl, 'tls') === 0)
-			$retVal['flags'] |= self::DB_SECURE_TLS;
-		elseif (strcasecmp($ssl, 'ssl') === 0)
-			$retVal['flags'] |= self::DB_SECURE_SSL;
+
+		$tls = self::get_field_value('imap', 'tls', false);
+		if ($tls)
+			$retVal['flags'] |= self::DB_SECURE_IMAP_TLS;
 
 		return $retVal;
 	}
 
+	private static function get_field_value($section, $field, $trim = true)
+	{
+		$retVal = rcube_utils::get_input_value(
+			'_ident_switch_form_' . $section . '_' . $field,
+			rcube_utils::INPUT_POST
+		);
+		if (!$trim)
+			return $retVal;
+
+		return self::ntrim($retVal);
+	}
 
 	private static function save_field_values($rc, $data)
 	{
@@ -436,14 +468,14 @@ class ident_switch extends rcube_plugin
 		{ // Record already exists, will update it
 			$sql = 'UPDATE ' .
 				$rc->db->table_name(self::TABLE) .
-				' SET flags = ?, label = ?, host = ?, port = ?, username = ?, password = ?, delimiter = ?, user_id = ?, iid = ?' .
+				' SET flags = ?, label = ?, imap_host = ?, imap_port = ?, username = ?, password = ?, smtp_host = ?, smtp_port = ?, user_id = ?, iid = ?' .
 				' WHERE id = ?';
 		}
 		else if ($data['flags'] & self::DB_ENABLED)
 		{ // No record exists, create new one
 			$sql = 'INSERT INTO ' .
 				$rc->db->table_name(self::TABLE) .
-				'(flags, label, host, port, username, password, delimiter, user_id, iid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+				'(flags, label, imap_host, imap_port, username, password, smtp_host, smtp_port, user_id, iid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 		}
 
 		if ($sql)
@@ -456,11 +488,12 @@ class ident_switch extends rcube_plugin
 				$sql,
 				$data['flags'],
 				$data['label'],
-				$data['host'],
-				$data['port'],
-				$data['user'],
-				$data['pass'],
-				$data['delim'],
+				$data['imap.host'],
+				$data['imap.port'],
+				$data['imap.user'],
+				$data['imap.pass'],
+				$data['smtp.host'],
+				$data['smtp.port'],
 				$rc->user->ID,
 				$data['id'],
 				$r['id']
@@ -499,7 +532,7 @@ class ident_switch extends rcube_plugin
 		}
 		else
 		{
-			$sql = 'SELECT host, flags, port, username, password, iid FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE id = ? AND user_id = ?';
+			$sql = 'SELECT imap_host, flags, imap_port, username, password, iid FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE id = ? AND user_id = ?';
 			$q = $rc->db->query($sql, $identId ,$rc->user->ID);
 			$r = $rc->db->fetch_assoc($q);
 			if (is_array($r))
@@ -515,22 +548,14 @@ class ident_switch extends rcube_plugin
 
 				self::write_log('Switching mailbox to one for identity with ID = ' . $r['iid'] . ' (username = \'' . $r['username'] . '\').');
 
-				$def_port = 143; // Default port here!
+				$def_port = 143; // Default IMAP port here!
 				$ssl = null;
-				if ($r['flags'] & self::DB_SECURE_TLS)
+				if ($r['flags'] & self::DB_SECURE_IMAP_TLS)
 				{
 					$ssl = 'tls';
-					$def_port = 143; // Default TLS port here!
+					$def_port = 143; // Default IMAP TLS port here!
 				}
-				elseif ($r['flags'] & self::DB_SECURE_SSL)
-				{
-					$ssl = 'ssl';
-					$def_port = 993; // Default SSL port here!
-				}
-
-				$port = $r['port'];
-				if (!$port)
-					$port = $def_port;
+				$port = $r['imap_port'] ? $r['imap_port'] : $def_port;
 
 				// If we are in default account now
 				// save everything with STORAGE
@@ -549,7 +574,7 @@ class ident_switch extends rcube_plugin
 				if (!$_SESSION['password' . self::MY_POSTFIX])
 					$_SESSION['password' . self::MY_POSTFIX] = $_SESSION['password'];
 
-				$_SESSION['storage_host'] = $r['host'] ? $r['host'] : 'localhost'; // Default host here!
+				$_SESSION['storage_host'] = $r['imap_host'] ? $r['imap_host'] : 'localhost'; // Default IMAP host here!
 				$_SESSION['storage_ssl'] = $ssl;
 				$_SESSION['storage_port'] = $port;
 				$_SESSION['username'] = $r['username'];
@@ -577,7 +602,7 @@ class ident_switch extends rcube_plugin
 	private static function sw_imap_off($iid)
 	{
 		$rc = rcmail::get_instance();
-		
+
 		$sql = 'UPDATE ' . $rc->db->table_name(self::TABLE) . ' SET flags = flags & ? WHERE iid = ? AND user_id = ?';
 		$rc->db->query($sql, ~self::DB_ENABLED, $iid, $rc->user->ID);
 	}
@@ -613,15 +638,13 @@ class ident_switch extends rcube_plugin
 			{ // Parse and set host and related
 				$urlArr = parse_url($cfg['host']);
 
-				$record['ident_switch.form.host'] = $urlArr['host'] ? rcube::Q($urlArr['host'], 'url') : '';
-				$record['ident_switch.form.port'] = $urlArr['port'] ? intval($urlArr['port']) : '';
+				$record['ident_switch.form.imap.host'] = $urlArr['host'] ? rcube::Q($urlArr['host'], 'url') : '';
+				$record['ident_switch.form.imap.port'] = $urlArr['port'] ? intval($urlArr['port']) : '';
 
 				if (strcasecmp('tls', $urlArr['scheme']) === 0)
-					$record['ident_switch.form.secure'] = 'tls';
-				elseif (strcasecmp('ssl', $urlArr['scheme']) === 0)
-					$record['ident_switch.form.secure'] = 'ssl';
+					$record['ident_switch.form.imap.tls'] = true;
 				else
-					$record['ident_switch.form.secure'] = '';
+					$record['ident_switch.form.imap.rls'] = false;
 			}
 
 			$loginSet = false;
@@ -630,11 +653,11 @@ class ident_switch extends rcube_plugin
 				switch (strtoupper($cfg['user']))
 				{
 				case 'EMAIL':
-					$record['ident_switch.form.username'] = $email;
+					$record['ident_switch.form.imap.username'] = $email;
 					$loginSet = true;
 					break;
 				case 'MBOX':
-					$record['ident_switch.form.username'] = strstr($email, '@', true);
+					$record['ident_switch.form.imap.username'] = strstr($email, '@', true);
 					$loginSet = true;
 					break;
 				}
@@ -642,13 +665,15 @@ class ident_switch extends rcube_plugin
 
 			if ($cfg['readonly'])
 			{
-				$record['ident_switch.form.readonly'] = 1;
+				$record['ident_switch.form.common.readonly'] = 1;
 				if ($loginSet)
-					$record['ident_switch.form.readonly'] = 2;
+					$record['ident_switch.form.common.readonly'] = 2;
 			}
 
 			return $cfg['readonly'];
 		}
+
+		return false;
 	}
 
 	private static function ntrim($str)

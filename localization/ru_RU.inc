@@ -4,47 +4,64 @@
  */
 $labels = array();
 
-// IMAP
-$labels['form.caption'] = 'IMAP';
+// Common
+$labels['form.common.caption'] = 'Плагин ident_switch';
 
 // Enabled
-$labels['form.enabled'] = 'Включено';
+$labels['form.common.enabled'] = 'Включено';
 
 // Label
-$labels['form.label'] = 'Название';
+$labels['form.common.label'] = 'Название';
+
+// Value in \'Label\' field is too long (32 chars max).
+$labels['err.label.long'] = '\'Название\' должно быть не длинее 32 символов.';
+
+
+// IMAP
+$labels['form.imap.caption'] = 'IMAP';
 
 // Server host name
-$labels['form.host'] = 'Адрес сервера';
+$labels['form.imap.host'] = 'Адрес сервера';
 
-// Secure connection (SSL/TLS)
-$labels['form.secure'] = 'Защита подключения';
+// Secure connection (TLS)
+$labels['form.imap.tls'] = 'Безопасное подключение (TLS)';
 
 // Port
-$labels['form.port'] = 'Порт';
+$labels['form.imap.port'] = 'Порт';
 
 // Username
-$labels['form.username'] = 'Имя пользователя';
+$labels['form.imap.username'] = 'Имя пользователя';
 
 // Password
-$labels['form.password'] = 'Пароль';
+$labels['form.imap.password'] = 'Пароль';
 
-// Folder hierarchy delimiter
-$labels['form.delimiter'] = 'Разделитель в иерархии папок';
+// Value in \'Username\' field is too long (64 chars max).
+$labels['err.user.long'] = '\'Имя пользователя\' должно быть не длинее 64 символов.';
 
-// Value in \'Label\' field of IMAP section is too long (32 chars max).
-$labels['err.label.long'] = '\'Название\' в разделе IMAP должно быть не длинее 32 символов.';
 
-// Value in \'Server host name\' field of IMAP section is too long (64 chars max).
-$labels['err.host.long'] = '\'Адрес сервера\' в разделе IMAP должен быть не длинее 64 символов.';
+// SMTP
+$labels['form.smtp.caption'] = 'SMTP';
 
-// Value in \'Username\' field of IMAP section is too long (64 chars max).
-$labels['err.user.long'] = '\'Имя пользователя\' в секции IMAP должно быть не длинее 64 символов.';
+// Server host name
+$labels['form.smtp.host'] = 'Адрес сервера';
 
-// Value in \'Folder hierarchy delimiter\' field of IMAP section is too long (1 char max).
-$labels['err.delim.long'] = '\'Разделитель в иерархии папок\' в секции IMAP должен быть не длинее 1 символа.';
+// Secure connection (TLS)
+$labels['form.smtp.tls'] = 'Безопасное подключение (TLS)';
 
-// Value in \'Port\' field of IMAP section must be a number.
-$labels['err.port.num'] = '\'Порт\' в секции IMAP должен быть числом.';
+// Port
+$labels['form.smtp.port'] = 'Порт';
 
-// Value in \'Port\' field of IMAP section must be between 1 and 65535.
-$labels['err.port.range'] = '\'Порт\' в секции IMAP должен быть в диапазоне от 1 до 65535.';
+// Authorization requtired
+$labels['form.smtp.auth'] = 'Требуется авторизация';
+
+
+// Errors
+
+// Value in \'Server host name\' field is too long (64 chars max).
+$labels['err.host.long'] = '\'Адрес сервера\' должен быть не длинее 64 символов.';
+
+// Value in \'Port\' field must be a number.
+$labels['err.port.num'] = '\'Порт\' должен быть числом.';
+
+// Value in \'Port\' field must be between 1 and 65535.
+$labels['err.port.range'] = '\'Порт\' должен быть в диапазоне от 1 до 65535.';
