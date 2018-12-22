@@ -481,8 +481,8 @@ class ident_switch extends rcube_plugin
 		if ($sql)
 		{
 			// Do we need to update pwd?
-			if ($data['pass'] != $r['password'])
-				$data['pass'] = $rc->encrypt($data['pass']);
+			if ($data['imap.pass'] != $r['password'])
+				$data['imap.pass'] = $rc->encrypt($data['imap.pass']);
 
 			$rc->db->query(
 				$sql,
