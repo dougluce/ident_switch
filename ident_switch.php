@@ -176,6 +176,14 @@ class ident_switch extends rcube_plugin
 			$args['smtp_server'] = $r['smtp_host'] ? $r['smtp_host'] : 'localhost'; // Default SMTP host here
 			$args['smtp_port'] = $r['smtp_port'] ? $r['smtp_port'] : 587; // Default SMTP port here
 
+			if ($r['flags'] & self::DB_SECURE_IMAP_TLS)
+			{
+				if (strpos($args['smtp_server'], ':') !== false)
+					self::write_log('SMTP server already contains protocol, ignoring TLS flag.');
+				else
+					$args['smtp_server'] = 'tls://' . $args['smtp_server'];
+			}
+
 			self::write_log(print_r($args, true));
 		}
 
