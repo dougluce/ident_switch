@@ -4,47 +4,64 @@
  */
 $labels = array();
 
-// IMAP
-$labels['form.caption'] = 'IMAP';
+// Plugin ident_switch
+$labels['form.common.caption'] = 'Plugin ident_switch';
 
 // Enabled
-$labels['form.enabled'] = 'Enabled';
+$labels['form.common.enabled'] = 'Enabled';
 
 // Label
-$labels['form.label'] = 'Label';
+$labels['form.common.label'] = 'Label';
+
+// Value in \'Label\' field is too long (32 chars max).
+$labels['err.label.long'] = 'Value in \'Label\' field is too long (32 chars max).';
+
+
+// IMAP
+$labels['form.imap.caption'] = 'IMAP';
 
 // Server host name
-$labels['form.host']='Server host name';
+$labels['form.imap.host']='Server host name';
 
-// Secure connection (SSL/TLS)
-$labels['form.secure']='Connection security';
+// Secure connection (TLS)
+$labels['form.imap.tls'] = 'Secure connection (TLS)';
 
 // Port
-$labels['form.port']='Port';
+$labels['form.imap.port'] = 'Port';
 
 // Username
-$labels['form.username'] = 'Username';
+$labels['form.imap.username'] = 'Username';
 
 // Password
-$labels['form.password'] = 'Password';
+$labels['form.imap.password'] = 'Password';
 
-// Folder hierarchy delimiter
-$labels['form.delimiter'] = 'Folder hierarchy delimiter';
+// Value in \'Username\' field is too long (64 chars max).
+$labels['err.user.long'] = 'Value in \'Username\' field is too long (64 chars max).';
 
-// Value in \'Label\' field of IMAP section is too long (32 chars max).
-$labels['err.label.long'] = 'Value in \'Label\' field of IMAP section is too long (32 chars max).';
 
-// Value in \'Server host name\' field of IMAP section is too long (64 chars max).
-$labels['err.host.long'] = 'Value in \'Server host name\' field of IMAP section is too long (64 chars max).';
+// SMTP
+$labels['form.smtp.caption'] = 'SMTP';
 
-// Value in \'Username\' field of IMAP section is too long (64 chars max).
-$labels['err.user.long'] = 'Value in \'Username\' field of IMAP section is too long (64 chars max).';
+// Server host name
+$labels['form.smtp.host'] = 'Server host name';
 
-// Value in \'Folder hierarchy delimiter\' field of IMAP section is too long (1 char max).
-$labels['err.delim.long'] = 'Value in \'Folder hierarchy delimiter\' field of IMAP section is too long (1 char max).';
+// Secure connection (TLS)
+$labels['form.smtp.tls'] = 'Secure connection (TLS)';
 
-// Value in \'Port\' field of IMAP section must be a number.
-$labels['err.port.num'] = 'Value in \'Port\' field of IMAP section must be a number.';
+// Port
+$labels['form.smtp.port'] = 'Port';
 
-// Value in \'Port\' field of IMAP section must be between 1 and 65535.
-$labels['err.port.range'] = 'Value in \'Port\' field of IMAP section must be between 1 and 65535.';
+// Authorization required
+$labels['form.smtp.auth'] = 'Authorization required';
+
+
+// Errors
+
+// Value in \'Server host name\' field is too long (64 chars max).
+$labels['err.host.long'] = 'Value in \'Server host name\' field is too long (64 chars max).';
+
+// Value in \'Port\' field must be a number.
+$labels['err.port.num'] = 'Value in \'Port\' field must be a number.';
+
+// Value in \'Port\' field must be between 1 and 65535.
+$labels['err.port.range'] = 'Value in \'Port\' field must be between 1 and 65535.';

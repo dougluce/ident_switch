@@ -4,7 +4,7 @@
  */
 $labels = array();
 
-// Common
+// Plugin ident_switch
 $labels['form.common.caption'] = 'Плагин ident_switch';
 
 // Enabled
@@ -51,7 +51,7 @@ $labels['form.smtp.tls'] = 'Безопасное подключение (TLS)';
 // Port
 $labels['form.smtp.port'] = 'Порт';
 
-// Authorization requtired
+// Authorization required
 $labels['form.smtp.auth'] = 'Требуется авторизация';
 
 
