@@ -21,7 +21,7 @@ $labels['err.label.long'] = 'Value in \'Label\' field is too long (32 chars max)
 $labels['form.imap.caption'] = 'IMAP';
 
 // Server host name
-$labels['form.imap.host']='Server host name';
+$labels['form.imap.host'] = 'Server host name';
 
 // Secure connection (TLS)
 $labels['form.imap.tls'] = 'Secure connection (TLS)';
