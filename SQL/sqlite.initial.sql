@@ -16,23 +16,23 @@ CREATE TABLE ident_switch
 		varchar(64),
 	password
 		varchar(64),
-	host
+	imap_host
 		varchar(64),
-	port
+	imap_port
 		integer
-		CHECK(port > 0 AND port <= 65535),
-	delimiter
-		char(1),
+		CHECK(imap_port > 0 AND imap_port <= 65535),
 	label
 		varchar(32),
 	flags
 		integer
 		NOT NULL
 		DEFAULT(0),
+  smtp_host
+    varchar(64),
+  smtp_port
+    integer
+    CHECK(smtp_port > 0 AND smtp_port <= 65535),
 	UNIQUE (user_id, label)
 );
-CREATE INDEX IX_ident_switch_user_id
-ON
-	ident_switch(user_id);
+CREATE INDEX IX_ident_switch_user_id ON ident_switch(user_id);
 CREATE INDEX IX_ident_switch_iid on ident_switch(iid);
-
