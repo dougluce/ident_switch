@@ -14,7 +14,8 @@ This plugin allows users to switch between different accounts (including remote)
 
 ### Settings ###
 
-![Plugin settings](https://i.imgur.com/hguQsUV.jpg)
+![Plugin settings](https://i.imgur.com/rFaHUbR.jpg)
+
 * **Enabled** - enables plugin (i.e. account switcing) for this identity.
 * **Label** - text that will be displayed in drop down list for this identity. If left blank email will be used.
 * **IMAP**
