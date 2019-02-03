@@ -1,7 +1,7 @@
 CREATE TABLE ident_switch
 (
 	id
-		serial
+		integer
 		PRIMARY KEY,
 	user_id
 		integer
