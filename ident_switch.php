@@ -183,8 +183,6 @@ class ident_switch extends rcube_plugin
 				else
 					$args['smtp_server'] = 'tls://' . $args['smtp_server'];
 			}
-
-			self::write_log(print_r($args, true));
 		}
 
 		return $args;
@@ -443,7 +441,7 @@ class ident_switch extends rcube_plugin
 		}
 
 		// Get also password
-		$retVal['imap.pass'] = self::get_field_value('imap', 'password', false);
+		$retVal['imap.pass'] = self::get_field_value('imap', 'password', false, true);
 
 		// Parse secure settings
 		$retVal['flags'] = self::DB_ENABLED;
@@ -455,11 +453,12 @@ class ident_switch extends rcube_plugin
 		return $retVal;
 	}
 
-	private static function get_field_value($section, $field, $trim = true)
+	private static function get_field_value($section, $field, $trim = true, $html = false)
 	{
 		$retVal = rcube_utils::get_input_value(
 			'_ident_switch_form_' . $section . '_' . $field,
-			rcube_utils::INPUT_POST
+			rcube_utils::INPUT_POST,
+			$html
 		);
 		if (!$trim)
 			return $retVal;
