@@ -20,7 +20,7 @@ CREATE TABLE ident_switch
 		varchar(64),
 	imap_port
 		integer
-		CHECK(port > 0 AND port <= 65535),
+		CHECK(imap_port > 0 AND imap_port <= 65535),
 	label
 		varchar(32),
 	flags
@@ -29,9 +29,9 @@ CREATE TABLE ident_switch
 		DEFAULT(0),
 	smtp_host
 	  varchar(64),
-  smtp_port
+    smtp_port
 		integer
-		CHECK(port > 0 AND port <= 65535),
+		CHECK(smtp_port > 0 AND smtp_port <= 65535),
 	UNIQUE (user_id, label)
 );
 
