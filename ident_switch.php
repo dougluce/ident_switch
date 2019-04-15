@@ -645,8 +645,8 @@ class ident_switch extends rcube_plugin
 			{ // Parse and set host and related
 				$urlArr = parse_url($cfg['host']);
 
-				$record['ident_switch.form.imap.host'] = $urlArr['host'] ? rcube::Q($urlArr['host'], 'url') : '';
-				$record['ident_switch.form.imap.port'] = $urlArr['port'] ? intval($urlArr['port']) : '';
+				$record['ident_switch.form.imap.host'] = $record['ident_switch.form.smtp.host'] = $urlArr['host'] ? rcube::Q($urlArr['host'], 'url') : '';
+				$record['ident_switch.form.imap.port'] = $record['ident_switch.form.smtp.port'] = $urlArr['port'] ? intval($urlArr['port']) : '';
 
 				if (strcasecmp('tls', $urlArr['scheme']) === 0)
 					$record['ident_switch.form.imap.tls'] = true;
