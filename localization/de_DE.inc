@@ -64,4 +64,4 @@ $labels['err.host.long'] = 'Der Wert in Feld \'Servername\' ist zu lang (max. 64
 $labels['err.port.num'] = 'Der Wert in Feld \'Port\' muss eine Zahl sein.';
 
 // Value in \'Port\' field must be between 1 and 65535.
-$labels['err.port.range'] = 'Der Wert in Feld \'Port\' muss 1 und 65535 liegen.';
+$labels['err.port.range'] = 'Der Wert in Feld \'Port\' muss zwischen 1 und 65535 liegen.';
