@@ -353,7 +353,7 @@ class ident_switch extends rcube_plugin
 
 		unset($_SESSION['createData' . self::MY_POSTFIX]);
 		if (!$data || count($data) == 0)
-			self::write_log('Object with ident_switch values not found in session for ID = ' . $args['id'] . '.');
+			self::write_log("Object with ident_switch values not found in session for ID = {$args['id']}.");
 		else
 		{
 			$data['id'] = $args['id'];
@@ -371,7 +371,7 @@ class ident_switch extends rcube_plugin
 		$q = $rc->db->query($sql, $args['id'], $rc->user->ID);
 
 		if ($rc->db->affected_rows($q))
-			self::write_log('Deleted associated information for identity with ID = ' . $args['id'] . '.');
+			self::write_log("Deleted associated information for identity with ID = {$args['id']}.");
 
 		return $args;
 	}
@@ -384,7 +384,10 @@ class ident_switch extends rcube_plugin
 			if (strcasecmp($_SESSION['username'], $rc->user->data['username']) !== 0)
 			{
 				if (isset($_SESSION['iid' . self::MY_POSTFIX]))
-					$rc->output->add_script('plugin_switchIdent_fixIdent(' . $_SESSION['iid' . self::MY_POSTFIX] . ');', 'docready');
+				{
+					$iid = $_SESSION['iid' . self::MY_POSTFIX];
+					$rc->output->add_script("plugin_switchIdent_fixIdent({$iid});", 'docready');
+				}
 				else
 					self::write_log('Special session variable with active identity ID not found.');
 			}
@@ -456,7 +459,7 @@ class ident_switch extends rcube_plugin
 	private static function get_field_value($section, $field, $trim = true, $html = false)
 	{
 		$retVal = rcube_utils::get_input_value(
-			'_ident_switch_form_' . $section . '_' . $field,
+			"_ident_switch_form_{$section}_{$field}",
 			rcube_utils::INPUT_POST,
 			$html
 		);
@@ -553,7 +556,7 @@ class ident_switch extends rcube_plugin
 					$r['username'] = $rIid['email'];
 				}
 
-				self::write_log('Switching mailbox to one for identity with ID = ' . $r['iid'] . ' (username = \'' . $r['username'] . '\').');
+				self::write_log("Switching mailbox to one for identity with ID = {$r['iid']} (username = '{$r['username']}').");
 
 				$def_port = 143; // Default IMAP port here!
 				$ssl = null;
@@ -597,7 +600,7 @@ class ident_switch extends rcube_plugin
 			else
 			{
 				// TODO: Show message in browser
-				self::write_log('Requested remote mailbox with ID = ' . $identId . ' not found.');
+				self::write_log("Requested remote mailbox with ID = {$identId} not found.");
 				return;
 			}
 		}
@@ -643,7 +646,7 @@ class ident_switch extends rcube_plugin
 		$cfg = $this->get_preconfig($email);
 		if (is_array($cfg))
 		{
-			self::write_log('Applying predefined configuration for \'' . $email . '\'.');
+			self::write_log("Applying predefined configuration for '{$email}'.");
 
 			if ($cfg['host'])
 			{ // Parse and set host and related
