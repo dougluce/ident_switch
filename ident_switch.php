@@ -581,7 +581,11 @@ class ident_switch extends rcube_plugin
 				if (!$_SESSION['password' . self::MY_POSTFIX])
 					$_SESSION['password' . self::MY_POSTFIX] = $_SESSION['password'];
 
-				$_SESSION['storage_host'] = $r['imap_host'] ? $r['imap_host'] : 'localhost'; // Default IMAP host here!
+				$host = $r['imap_host'] ? $r['imap_host'] : 'localhost'; // Default IMAP host here!
+				if ($ssl)
+					$host = "{$ssl}://{$host}";
+
+				$_SESSION['storage_host'] = $host;
 				$_SESSION['storage_ssl'] = $ssl;
 				$_SESSION['storage_port'] = $port;
 				$_SESSION['username'] = $r['username'];
