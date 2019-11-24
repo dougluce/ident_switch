@@ -152,7 +152,7 @@ class ident_switch extends rcube_plugin
 	function on_smtp_connect($args)
 	{
 		$iid = $_SESSION['iid' . self::MY_POSTFIX];
-		if (!is_integer($iid) || $iid == -1)
+		if (!is_numeric($iid) || $iid == -1)
 			return $args;
 
 		$rc = rcmail::get_instance();
