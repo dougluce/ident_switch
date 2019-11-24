@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS ident_switch
 	imap_port
 		int
 		CHECK(imap_port > 0 AND imap_port <= 65535),
+    imap_delimiter
+        char(1),
 	label
 		varchar(32),
 	flags

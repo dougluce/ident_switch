@@ -207,6 +207,7 @@ class ident_switch extends rcube_plugin
 			$prefix . 'tls' => array('type' => 'checkbox'),
 			$prefix . 'username' => array('type' => 'text', 'size' => 64, 'placeholder' => $record['email']),
 			$prefix . 'password' => array('type' => 'password', 'size' => 64),
+			$prefix . 'delimiter' => array('type' => 'text', 'size' => 1, 'placeholder' => '.'),
 		);
 	}
 
@@ -246,6 +247,7 @@ class ident_switch extends rcube_plugin
 				'label' => 'common.label',
 				'imap_host' => 'imap.host',
 				'imap_port' => 'imap.port',
+				'imap_delimiter' => 'imap.delimiter',
 				'username' => 'imap.username',
 				'password' => 'imap.password',
 				'smtp_host' => 'smtp.host',
@@ -418,23 +420,29 @@ class ident_switch extends rcube_plugin
 						$retVal['err'] = 'port.range';
 					else
 					{
-						$retVal['imap.user'] = self::get_field_value('imap', 'username');
-						if (strlen($retVal['imap.user']) > 64)
-							$retVal['err'] = 'user.long';
+						$retVal['imap.delimiter'] = self::get_field_value('imap', 'delimiter');
+						if (strlen($retVal['imap.delimiter']) > 1)
+							$retVal['err'] = 'delim.long';
 						else
 						{
-							$retVal['smtp.host'] = self::get_field_value('smtp', 'host');
-							if (strlen($retVal['smtp.host']) > 64)
-								$retVal['err'] = 'host.long';
+							$retVal['imap.user'] = self::get_field_value('imap', 'username');
+							if (strlen($retVal['imap.user']) > 64)
+								$retVal['err'] = 'user.long';
 							else
 							{
-								$retVal['smtp.port'] = self::get_field_value('smtp', 'port');
-								if ($retVal['smtp.port'] && !ctype_digit($retVal['smtp.port']))
-									$retVal['err'] = 'port.num';
+								$retVal['smtp.host'] = self::get_field_value('smtp', 'host');
+								if (strlen($retVal['smtp.host']) > 64)
+									$retVal['err'] = 'host.long';
 								else
 								{
-									if ($retVal['smtp.port'] && ($retVal['smtp.port'] <= 0 || $retVal['smtp.port'] > 65535))
-										$retVal['err'] = 'port.range';
+									$retVal['smtp.port'] = self::get_field_value('smtp', 'port');
+									if ($retVal['smtp.port'] && !ctype_digit($retVal['smtp.port']))
+										$retVal['err'] = 'port.num';
+									else
+									{
+										if ($retVal['smtp.port'] && ($retVal['smtp.port'] <= 0 || $retVal['smtp.port'] > 65535))
+											$retVal['err'] = 'port.range';
+									}
 								}
 							}
 						}
@@ -478,14 +486,14 @@ class ident_switch extends rcube_plugin
 		{ // Record already exists, will update it
 			$sql = 'UPDATE ' .
 				$rc->db->table_name(self::TABLE) .
-				' SET flags = ?, label = ?, imap_host = ?, imap_port = ?, username = ?, password = ?, smtp_host = ?, smtp_port = ?, user_id = ?, iid = ?' .
+				' SET flags = ?, label = ?, imap_host = ?, imap_port = ?, imap_delimiter = ?, username = ?, password = ?, smtp_host = ?, smtp_port = ?, user_id = ?, iid = ?' .
 				' WHERE id = ?';
 		}
 		else if ($data['flags'] & self::DB_ENABLED)
 		{ // No record exists, create new one
 			$sql = 'INSERT INTO ' .
 				$rc->db->table_name(self::TABLE) .
-				'(flags, label, imap_host, imap_port, username, password, smtp_host, smtp_port, user_id, iid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+				'(flags, label, imap_host, imap_port, imap_delimiter, username, password, smtp_host, smtp_port, user_id, iid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
 		}
 
 		if ($sql)
@@ -500,6 +508,7 @@ class ident_switch extends rcube_plugin
 				$data['label'],
 				$data['imap.host'],
 				$data['imap.port'],
+				$data['imap.delimiter'],
 				$data['imap.user'],
 				$data['imap.pass'],
 				$data['smtp.host'],
@@ -542,7 +551,7 @@ class ident_switch extends rcube_plugin
 		}
 		else
 		{
-			$sql = 'SELECT imap_host, flags, imap_port, username, password, iid FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE id = ? AND user_id = ?';
+			$sql = 'SELECT imap_host, flags, imap_port, imap_delimiter, username, password, iid FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE id = ? AND user_id = ?';
 			$q = $rc->db->query($sql, $identId ,$rc->user->ID);
 			$r = $rc->db->fetch_assoc($q);
 			if (is_array($r))
@@ -558,6 +567,29 @@ class ident_switch extends rcube_plugin
 
 				self::write_log("Switching mailbox to one for identity with ID = {$r['iid']} (username = '{$r['username']}').");
 
+				if ($_SESSION['username'] == $rc->user->data['username'])
+				{ // If we are in default account now - save values
+					foreach ($_SESSION as $k => $v)
+					{
+						if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, self::MY_POSTFIX, -$my_postfix_len, $my_postfix_len) !== 0)
+						{
+							if (!$_SESSION[$k . self::MY_POSTFIX])
+								$_SESSION[$k . self::MY_POSTFIX] = $_SESSION[$k];
+
+							$rc->session->remove($k);
+						}
+					}
+
+					$moreToSave = Array('password', 'imap_delimiter');
+					foreach ($moreToSave as $k)
+					{
+						if (!$_SESSION[$k . self::MY_POSTFIX])
+							$_SESSION[$k . self::MY_POSTFIX] = $_SESSION[$k];
+
+						$rc->session->remove($k);
+					}
+				}
+
 				$def_port = 143; // Default IMAP port here!
 				$ssl = null;
 				if ($r['flags'] & self::DB_SECURE_IMAP_TLS)
@@ -567,30 +599,16 @@ class ident_switch extends rcube_plugin
 				}
 				$port = $r['imap_port'] ? $r['imap_port'] : $def_port;
 
-				// If we are in default account now
-				// save everything with STORAGE
-				if ($_SESSION['username'] == $rc->user->data['username'])
-				{
-					foreach ($_SESSION as $k => $v)
-					{
-						if (strncasecmp($k, 'storage', 7) === 0 && substr_compare($k, self::MY_POSTFIX, -$my_postfix_len, $my_postfix_len) !== 0)
-						{
-							if (!$_SESSION[$k . self::MY_POSTFIX])
-								$_SESSION[$k . self::MY_POSTFIX] = $_SESSION[$k];
-                            $rc->session->remove($k);
-						}
-					}
-				}
-				if (!$_SESSION['password' . self::MY_POSTFIX])
-					$_SESSION['password' . self::MY_POSTFIX] = $_SESSION['password'];
-
 				$host = $r['imap_host'] ? $r['imap_host'] : 'localhost'; // Default IMAP host here!
 				if ($ssl)
 					$host = "{$ssl}://{$host}";
 
+				$delimiter = $r['delimiter'] ? $r['delimiter'] : '.'; // Default delimiter here
+
 				$_SESSION['storage_host'] = $host;
 				$_SESSION['storage_ssl'] = $ssl;
 				$_SESSION['storage_port'] = $port;
+				$_SESSION['imap_delimiter'] = $delimiter;
 				$_SESSION['username'] = $r['username'];
 				$_SESSION['password'] = $r['password'];
 				$_SESSION['iid' . self::MY_POSTFIX] = $r['iid'];

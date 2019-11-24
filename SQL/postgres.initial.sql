@@ -21,6 +21,8 @@ CREATE TABLE ident_switch
 	imap_port
 		integer
 		CHECK(imap_port > 0 AND imap_port <= 65535),
+	imap_delimiter
+	    char(1),
 	label
 		varchar(32),
 	flags
