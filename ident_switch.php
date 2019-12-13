@@ -31,16 +31,17 @@ class ident_switch extends rcube_plugin
 		$this->add_hook('identity_create_after', array($this, 'on_identity_create_after'));
 		$this->add_hook('identity_delete', array($this, 'on_identity_delete'));
 		$this->add_hook('template_object_composeheaders', array($this, 'on_template_object_composeheaders'));
+		$this->add_hook('preferences_list', array($this, 'on_special_folders_form'));
+		$this->add_hook('preferences_save', array($this, 'on_special_folders_update'));
 
 		$this->register_action('plugin.ident_switch.switch', array($this, 'on_switch'));
 
 		$rc = rcmail::get_instance();
-		$saveFromConfig = Array('drafts_mbox', 'sent_mbox', 'trash_mbox', 'junk_mbox');
-		foreach ($saveFromConfig as $k)
+		foreach (rcube_storage::$folder_types as $type)
 		{
-			$key = $k . '_default' . self::MY_POSTFIX;
+			$key = $type . '_mbox_default' . self::MY_POSTFIX;
 			if (!$_SESSION[$key])
-				$_SESSION[$key] = $rc->config->get($k);
+				$_SESSION[$key] = $rc->config->get($type . '_mbox');
 		}
 	}
 
@@ -60,13 +61,12 @@ class ident_switch extends rcube_plugin
 			}
 		}
 
-		$setConfig = Array('drafts_mbox', 'sent_mbox', 'trash_mbox', 'junk_mbox');
-		foreach ($setConfig as $k)
+		foreach (rcube_storage::$folder_types as $type)
 		{
-			$defaultKey = $k . '_default' . self::MY_POSTFIX;
-			$otherKey = $k . self::MY_POSTFIX;
+			$defaultKey = $type . '_mbox_default' . self::MY_POSTFIX;
+			$otherKey = $type . '_mbox' . self::MY_POSTFIX;
 			$val = $_SESSION[$otherKey] ? $_SESSION[$otherKey] : $_SESSION[$defaultKey];
-			$rc->config->set($k, $val);
+			$rc->config->set($type . '_mbox', $val);
 		}
 
 		return $args;
@@ -414,6 +414,84 @@ class ident_switch extends rcube_plugin
 		}
 	}
 
+	function on_special_folders_form($args)
+	{
+		$rc = rcmail::get_instance();
+
+		if (($args['section'] == 'folders') &&
+		    (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 0))
+		{
+			$no_override = array_flip((array)$rc->config->get('dont_override'));
+			$onchange = "if ($(this).val() == 'INBOX') $(this).val('')";
+			$args['blocks']['main']['name'] .= ' (remote)';
+			$select = $rc->folder_selector(array('noselection' => '---',
+																					 'realnames' => true,
+																					 'maxlength' => 30,
+																					 'folder_filter' => 'mail',
+																					 'folder_rights' => 'w'));
+
+			foreach (rcube_storage::$folder_types as $type)
+			{
+				if (isset($no_override[$type . '_mbox']))
+					continue;
+
+				$defaultKey = $type . '_mbox_default' . self::MY_POSTFIX;
+				$otherKey = $type . '_mbox' . self::MY_POSTFIX;
+				$selected = $_SESSION[$otherKey] ? $_SESSION[$otherKey] : $_SESSION[$defaultKey];
+				$attr = array('id' => '_' . $type . '_mbox', 'name' => '_' . $type . '_mbox', 'onchange' => $onchange);
+				$args['blocks']['main']['options'][$type . '_mbox']['content'] = $select->show($selected, $attr);
+			}
+		}
+
+		return $args;
+	}
+
+	function on_special_folders_update($args)
+	{
+		$rc = rcmail::get_instance();
+
+		if (($args['section'] == 'folders') &&
+		    (strcasecmp($rc->user->data['username'], $_SESSION['username']) !== 0))
+		{
+			$sql = 'SELECT id FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
+			$q = $rc->db->query($sql, $_SESSION['iid' . self::MY_POSTFIX], $rc->user->ID);
+			$r = $rc->db->fetch_assoc($q);
+			if ($r)
+			{
+				$sql = 'UPDATE ' .
+					$rc->db->table_name(self::TABLE) .
+					' SET drafts_mbox = ?, sent_mbox = ?, junk_mbox = ?, trash_mbox = ?' .
+					' WHERE id = ?';
+
+				$rc->db->query(
+					$sql,
+					$args['prefs']['drafts_mbox'],
+					$args['prefs']['sent_mbox'],
+					$args['prefs']['junk_mbox'],
+					$args['prefs']['trash_mbox'],
+					$r['id']
+				);
+
+				//abuse $plugin['abort'] to prevent RC main from saving prefs
+				$args['abort'] = true;
+				$args['result'] = true;
+
+				foreach (rcube_storage::$folder_types as $type)
+				{
+					if ($args['prefs'][$type . '_mbox']) {
+						$otherKey = $type . '_mbox' . self::MY_POSTFIX;
+						$_SESSION[$otherKey] = $args['prefs'][$type . '_mbox'];
+					}
+				}
+				return $args;
+			}
+
+			$args['abort'] = true;
+			$args['result'] = false;
+		}
+
+		return $args;
+	}
 
 	private static function check_field_values()
 	{
@@ -570,10 +648,9 @@ class ident_switch extends rcube_plugin
 			$_SESSION['password'] = $_SESSION['password' . self::MY_POSTFIX];
 			$_SESSION['iid' . self::MY_POSTFIX] = -1;
 
-			$delFromConfig = Array('drafts_mbox', 'sent_mbox', 'trash_mbox', 'junk_mbox');
-			foreach ($delFromConfig as $k)
+			foreach (rcube_storage::$folder_types as $type)
 			{
-				$otherKey = $k . self::MY_POSTFIX;
+				$otherKey = $type . '_mbox' . self::MY_POSTFIX;
 				if ($_SESSION[$otherKey])
 					$rc->session->remove($otherKey);
 			}
@@ -609,7 +686,7 @@ class ident_switch extends rcube_plugin
 						}
 					}
 
-					$moreToSave = Array('password', 'imap_delimiter');
+					$moreToSave = array('password', 'imap_delimiter');
 					foreach ($moreToSave as $k)
 					{
 						if (!$_SESSION[$k . self::MY_POSTFIX])
@@ -642,12 +719,11 @@ class ident_switch extends rcube_plugin
 				$_SESSION['password'] = $r['password'];
 				$_SESSION['iid' . self::MY_POSTFIX] = $r['iid'];
 
-				$saveToSessiong = Array('drafts_mbox', 'sent_mbox', 'trash_mbox', 'junk_mbox');
-				foreach ($saveToSessiong as $k)
+				foreach (rcube_storage::$folder_types as $type)
 				{
-					if ($r[$k]) {
-						$otherKey = $k . self::MY_POSTFIX;
-						$_SESSION[$otherKey] = $r[$k];
+					if ($r[$type . '_mbox']) {
+						$otherKey = $type . '_mbox' . self::MY_POSTFIX;
+						$_SESSION[$otherKey] = $r[$type . '_mbox'];
 					}
 				}
 			}
