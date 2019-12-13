@@ -488,8 +488,16 @@ class ident_switch extends rcube_plugin
 
 			$args['abort'] = true;
 			$args['result'] = false;
+			return $args;
 		}
 
+		foreach (rcube_storage::$folder_types as $type)
+		{
+			if ($args['prefs'][$type . '_mbox']) {
+				$key = $type . '_mbox_default' . self::MY_POSTFIX;
+				$_SESSION[$key] = $args['prefs'][$type . '_mbox'];
+			}
+		}
 		return $args;
 	}
 
