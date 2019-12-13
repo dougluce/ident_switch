@@ -33,6 +33,15 @@ class ident_switch extends rcube_plugin
 		$this->add_hook('template_object_composeheaders', array($this, 'on_template_object_composeheaders'));
 
 		$this->register_action('plugin.ident_switch.switch', array($this, 'on_switch'));
+
+		$rc = rcmail::get_instance();
+		$saveFromConfig = Array('drafts_mbox', 'sent_mbox', 'trash_mbox', 'junk_mbox');
+		foreach ($saveFromConfig as $k)
+		{
+			$key = $k . '_default' . self::MY_POSTFIX;
+			if (!$_SESSION[$key])
+				$_SESSION[$key] = $rc->config->get($k);
+		}
 	}
 
 	function on_startup($args)
@@ -49,6 +58,15 @@ class ident_switch extends rcube_plugin
 				$this->add_texts('localization/');
 				$rc->config->set('create_default_folders', false);
 			}
+		}
+
+		$setConfig = Array('drafts_mbox', 'sent_mbox', 'trash_mbox', 'junk_mbox');
+		foreach ($setConfig as $k)
+		{
+			$defaultKey = $k . '_default' . self::MY_POSTFIX;
+			$otherKey = $k . self::MY_POSTFIX;
+			$val = $_SESSION[$otherKey] ? $_SESSION[$otherKey] : $_SESSION[$defaultKey];
+			$rc->config->set($k, $val);
 		}
 
 		return $args;
@@ -531,6 +549,9 @@ class ident_switch extends rcube_plugin
 		$my_postfix_len = strlen(self::MY_POSTFIX);
 		$identId = rcube_utils::get_input_value('_ident-id', rcube_utils::INPUT_POST);
 
+		$rc->session->remove('folders');
+		$rc->session->remove('unseen_count');
+
 		if (-1 == $identId)
 		{ // Switch to main account
 			self::write_log('Switching mailbox back to default.');
@@ -548,10 +569,18 @@ class ident_switch extends rcube_plugin
 			$_SESSION['username'] = $rc->user->data['username'];
 			$_SESSION['password'] = $_SESSION['password' . self::MY_POSTFIX];
 			$_SESSION['iid' . self::MY_POSTFIX] = -1;
+
+			$delFromConfig = Array('drafts_mbox', 'sent_mbox', 'trash_mbox', 'junk_mbox');
+			foreach ($delFromConfig as $k)
+			{
+				$otherKey = $k . self::MY_POSTFIX;
+				if ($_SESSION[$otherKey])
+					$rc->session->remove($otherKey);
+			}
 		}
 		else
 		{
-			$sql = 'SELECT imap_host, flags, imap_port, imap_delimiter, username, password, iid FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE id = ? AND user_id = ?';
+			$sql = 'SELECT imap_host, flags, imap_port, imap_delimiter, drafts_mbox, sent_mbox, junk_mbox, trash_mbox, username, password, iid FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE id = ? AND user_id = ?';
 			$q = $rc->db->query($sql, $identId ,$rc->user->ID);
 			$r = $rc->db->fetch_assoc($q);
 			if (is_array($r))
@@ -613,7 +642,14 @@ class ident_switch extends rcube_plugin
 				$_SESSION['password'] = $r['password'];
 				$_SESSION['iid' . self::MY_POSTFIX] = $r['iid'];
 
-				$rc->session->remove('folders');
+				$saveToSessiong = Array('drafts_mbox', 'sent_mbox', 'trash_mbox', 'junk_mbox');
+				foreach ($saveToSessiong as $k)
+				{
+					if ($r[$k]) {
+						$otherKey = $k . self::MY_POSTFIX;
+						$_SESSION[$otherKey] = $r[$k];
+					}
+				}
 			}
 			else
 			{
