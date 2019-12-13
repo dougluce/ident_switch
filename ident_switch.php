@@ -423,12 +423,16 @@ class ident_switch extends rcube_plugin
 		{
 			$no_override = array_flip((array)$rc->config->get('dont_override'));
 			$onchange = "if ($(this).val() == 'INBOX') $(this).val('')";
-			$args['blocks']['main']['name'] .= ' (remote)';
 			$select = $rc->folder_selector(array('noselection' => '---',
 																					 'realnames' => true,
 																					 'maxlength' => 30,
 																					 'folder_filter' => 'mail',
 																					 'folder_rights' => 'w'));
+
+			$sql = 'SELECT label FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
+			$q = $rc->db->query($sql, $_SESSION['iid' . self::MY_POSTFIX], $rc->user->ID);
+			$r = $rc->db->fetch_assoc($q);
+			$args['blocks']['main']['name'] .= ' (' . ($r['label'] ? rcube::Q($rc->gettext('server')) . ': ' . $r['label'] : 'remote') . ')';
 
 			foreach (rcube_storage::$folder_types as $type)
 			{
