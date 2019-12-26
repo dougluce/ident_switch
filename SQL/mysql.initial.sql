@@ -32,6 +32,14 @@ CREATE TABLE IF NOT EXISTS ident_switch
   smtp_port
     int
     CHECK(smtp_port > 0 AND smtp_port <= 65535),
+	drafts_mbox
+	  varchar(64),
+	sent_mbox
+	  varchar(64),
+	junk_mbox
+	  varchar(64),
+	trash_mbox
+	  varchar(64),
   UNIQUE KEY user_id_label (user_id, label),
   CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT fk_identity_id FOREIGN KEY (iid) REFERENCES identities(identity_id) ON DELETE CASCADE ON UPDATE CASCADE,
