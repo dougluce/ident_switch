@@ -1,50 +1,50 @@
-CREATE TABLE IF NOT EXISTS ident_switch
+CREATE TABLE IF NOT EXISTS `ident_switch`
 (
-	id
+	`id`
 		int(10) UNSIGNED
 		NOT NULL
 		AUTO_INCREMENT,
-	user_id
+	`user_id`
 		int(10) UNSIGNED
 		NOT NULL,
-	iid
+	`iid`
 		int(10) UNSIGNED
 		NOT NULL,
-	username
+	`username`
 		varchar(64),
-	password
+	`password`
 		varchar(64),
-	imap_host
+	`imap_host`
 		varchar(64),
-	imap_port
+	`imap_port`
 		int
-		CHECK(imap_port > 0 AND imap_port <= 65535),
-    imap_delimiter
-        char(1),
-	label
+		CHECK(`imap_port` > 0 AND `imap_port` <= 65535),
+	`imap_delimiter`
+		char(1),
+	`label`
 		varchar(32),
-	flags
+	`flags`
 		int
 		NOT NULL
 		DEFAULT 0,
-  smtp_host
-    varchar(64),
-  smtp_port
-    int
-    CHECK(smtp_port > 0 AND smtp_port <= 65535),
-	drafts_mbox
-	  varchar(64),
-	sent_mbox
-	  varchar(64),
-	junk_mbox
-	  varchar(64),
-	trash_mbox
-	  varchar(64),
-  UNIQUE KEY user_id_label (user_id, label),
-  CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT fk_identity_id FOREIGN KEY (iid) REFERENCES identities(identity_id) ON DELETE CASCADE ON UPDATE CASCADE,
-  PRIMARY KEY(id),
-  INDEX IX_ident_switch_user_id (user_id),
-  INDEX IX_ident_switch_iid (iid)
+	`smtp_host`
+		varchar(64),
+	`smtp_port`
+		int
+		CHECK(`smtp_port` > 0 AND `smtp_port` <= 65535),
+	`drafts_mbox`
+		varchar(64),
+	`sent_mbox`
+		varchar(64),
+	`junk_mbox`
+		varchar(64),
+	`trash_mbox`
+		varchar(64),
+	UNIQUE KEY `user_id_label` (`user_id`, `label`),
+	CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `users`(`user_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+	CONSTRAINT `fk_identity_id` FOREIGN KEY (`iid`) REFERENCES `identities`(`identity_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+	PRIMARY KEY(`id`),
+	INDEX `IX_ident_switch_user_id`(`user_id`),
+	INDEX `IX_ident_switch_iid`(`iid`)
 );
 

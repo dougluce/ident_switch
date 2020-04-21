@@ -1,6 +1,6 @@
 ALTER TABLE
-	ident_switch
+	`ident_switch`
 MODIFY
-	username
-	varchar(64)
-	NULL;
+	`username`
+		varchar(64)
+		NULL;

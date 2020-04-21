@@ -1,5 +1,5 @@
 ALTER TABLE
-	ident_switch
+	`ident_switch`
 MODIFY
-	username
+	`username`
 		varchar(64);

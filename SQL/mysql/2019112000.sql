@@ -1,5 +1,5 @@
 ALTER TABLE
-  ident_switch
+  `ident_switch`
 ADD COLUMN
-	imap_delimiter
+	`imap_delimiter`
     char(1);
