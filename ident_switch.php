@@ -718,8 +718,9 @@ class ident_switch extends rcube_plugin
 				$port = $r['imap_port'] ? $r['imap_port'] : $def_port;
 
 				$host = $r['imap_host'] ? $r['imap_host'] : 'localhost'; // Default IMAP host here!
-				if ($ssl)
-					$host = "{$ssl}://{$host}";
+				$hostProtocol = "{$ssl}://";
+				if ($ssl && strncasecmp($host, $hostProtocol, strlen($hostProtocol)) !== 0)
+					$host = $hostProtocol . $host;
 
 				$delimiter = $r['imap_delimiter'] ? $r['imap_delimiter'] : '.'; // Default delimiter here
 
