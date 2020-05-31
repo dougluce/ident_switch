@@ -30,7 +30,7 @@ $labels['form.imap.tls'] = 'Secure connection (TLS)';
 $labels['form.imap.port'] = 'Port';
 
 // Folder hierarchy delimiter
-$labels['form.delimiter'] = 'Folder hierarchy delimiter';
+$labels['form.imap.delimiter'] = 'Folder hierarchy delimiter';
 
 // Username
 $labels['form.imap.username'] = 'Username';
