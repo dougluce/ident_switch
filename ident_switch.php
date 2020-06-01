@@ -106,16 +106,19 @@ class ident_switch extends rcube_plugin
 			$iid = -1;
 		elseif (ctype_digit($iid_s))
 			$iid = intval($iid_s);
+		
+		$accNames = array($_SESSION['global_alias'] ? $_SESSION['global_alias'] : $rc->user->data['username']);
+		$accValues = array(-1);
+		$accSelected = -1;
 
 		// Get list of alternative accounts
-		$sOpt = '';
 		$sql = 'SELECT id, iid, label, username FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE user_id = ? AND flags & ? > 0';
 		$qRec = $rc->db->query($sql, $rc->user->data['user_id'], self::DB_ENABLED);
 		while ($r = $rc->db->fetch_assoc($qRec))
 		{
-			$opts = array('value' => $r['id']);
+			$accValues[] = $r['id'];
 			if ($iid == $r['iid'])
-				$opts['selected'] = 'selected';
+				$accSelected = $r['id'];
 
 			// Make label
 			$lbl = $r['label'];
@@ -135,39 +138,21 @@ class ident_switch extends rcube_plugin
 				else
 					$lbl = $r['username'];
 			}
-
-			$sOpt .= html::tag(
-				'option',
-				$opts,
-				rcube::Q($lbl)
-			);
+			$accNames[] = rcube::Q($lbl);
 		}
 
 		// Render UI if user has extra accounts
-		if (!empty($sOpt))
+		if (count($accValues) > 1)
 		{
-			// Add main account
-			$opts = array('value' => -1);
-			if ($iid <= 0)
-				$opts['selected'] = 'selected';
-
-			$sOpt = html::tag(
-				'option',
-				$opts,
-				$_SESSION['global_alias'] ? $_SESSION['global_alias'] : $rc->user->data['username']
-			) . $sOpt;
-
 			$this->include_script('ident_switch-switch.js');
-			$sw = html::tag(
-				'select', 
-				array(
-					'id' => 'plugin-ident_switch-account',
-					'style' => 'display: none; padding: 0;',
-					'onchange' => 'plugin_switchIdent_switch(this.value);',
-				),
-				$sOpt
-			);
-			$rc->output->add_footer($sw);
+
+			$select = new html_select(array(
+				'id' => 'plugin-ident_switch-account',
+				'style' => 'display: none; padding: 0;',
+				'onchange' => 'plugin_switchIdent_switch(this.value);',
+			));
+			$select->add($accNames, $accValues);
+			$rc->output->add_footer($select->show(array($accSelected)));
 		}
 	}
 
