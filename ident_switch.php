@@ -118,7 +118,6 @@ class ident_switch extends rcube_plugin
 			. " {$rc->db->table_name(self::TABLE)} isw"
 			. " INNER JOIN {$rc->db->table_name('identities')} ii ON isw.iid=ii.identity_id"
 			. " WHERE isw.user_id = ? AND isw.flags & ? > 0";
-		self::write_log($sql);
 		$qRec = $rc->db->query($sql, $rc->user->data['user_id'], self::DB_ENABLED);
 		while ($r = $rc->db->fetch_assoc($qRec))
 		{
@@ -549,7 +548,6 @@ class ident_switch extends rcube_plugin
 										else
 										{
 											$retVal['smtp.auth'] = self::get_field_value('smtp', 'auth');
-											self::write_log($_POST);
 											if (!ctype_digit($retVal['smtp.auth']))
 												$retVal['err'] = 'auth.num';
 										}
