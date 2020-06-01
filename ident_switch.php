@@ -112,7 +112,13 @@ class ident_switch extends rcube_plugin
 		$accSelected = -1;
 
 		// Get list of alternative accounts
-		$sql = 'SELECT id, iid, label, username FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE user_id = ? AND flags & ? > 0';
+		$sql = "SELECT "
+			. "isw.id, isw.iid, isw.label, isw.username, ii.email"
+			. " FROM"
+			. " {$rc->db->table_name(self::TABLE)} isw"
+			. " INNER JOIN {$rc->db->table_name('identities')} ii ON isw.iid=ii.identity_id"
+			. " WHERE isw.user_id = ? AND isw.flags & ? > 0";
+		self::write_log($sql);
 		$qRec = $rc->db->query($sql, $rc->user->data['user_id'], self::DB_ENABLED);
 		while ($r = $rc->db->fetch_assoc($qRec))
 		{
@@ -125,13 +131,7 @@ class ident_switch extends rcube_plugin
 			if (!$lbl)
 			{
 				if (!$r['username'])
-				{ // Load email from identity
-					$sql = 'SELECT email FROM ' . $rc->db->table_name('identities') . ' WHERE identity_id = ?';
-					$q = $rc->db->query($sql, $r['iid']);
-					$rIid = $rc->db->fetch_assoc($q);
-
-					$r['username'] = $rIid['email'];
-				}
+					$r['username'] = $r['email'];
 
 				if (strpos($r['username'], '@') === false)
 					$lbl = $r['username'] . '@' . ($r['host'] ? $r['host'] : 'localhost');
