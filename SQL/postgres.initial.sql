@@ -34,6 +34,10 @@ CREATE TABLE ident_switch
     smtp_port
 		integer
 		CHECK(smtp_port > 0 AND smtp_port <= 65535),
+	smtp_auth
+        smallint
+        NOT NULL
+        DEFAULT(1),
     drafts_mbox
         varchar(64),
     sent_mbox

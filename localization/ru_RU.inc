@@ -54,8 +54,14 @@ $labels['form.smtp.tls'] = 'Безопасное подключение (TLS)';
 // Port
 $labels['form.smtp.port'] = 'Порт';
 
-// Authorization required
-$labels['form.smtp.auth'] = 'Требуется авторизация';
+// Authorization
+$labels['form.smtp.auth'] = 'Авторизация';
+
+// As IMAP
+$labels['form.smtp.auth.imap'] = 'Как IMAP';
+
+// None
+$labels['form.smtp.auth.none'] = 'Нет';
 
 
 // Errors

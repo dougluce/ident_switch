@@ -54,8 +54,14 @@ $labels['form.smtp.tls'] = 'Secure connection (TLS)';
 // Port
 $labels['form.smtp.port'] = 'Port';
 
-// Authorization required
-$labels['form.smtp.auth'] = 'Authorization required';
+// Authorization
+$labels['form.smtp.auth'] = 'Authorization';
+
+// As IMAP
+$labels['form.smtp.auth.imap'] = 'As IMAP';
+
+// None
+$labels['form.smtp.auth.none'] = 'None';
 
 
 // Errors
