@@ -163,7 +163,7 @@ class ident_switch extends rcube_plugin
 
 		$rc = rcmail::get_instance();
 
-		$sql = 'SELECT smtp_host, flags, smtp_port, username, smtp_auth password FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
+		$sql = 'SELECT smtp_host, flags, smtp_port, username, smtp_auth, password FROM ' . $rc->db->table_name(self::TABLE) . ' WHERE iid = ? AND user_id = ?';
 		$q = $rc->db->query($sql, $iid ,$rc->user->ID);
 		$r = $rc->db->fetch_assoc($q);
 		if (is_array($r))
