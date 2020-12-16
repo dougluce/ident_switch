@@ -1,3 +1,8 @@
+PRAGMA foreign_keys=off;
+BEGIN TRANSACTION;
+
+ALTER TABLE ident_switch RENAME TO ident_switch_old;
+
 CREATE TABLE ident_switch
 (
 	id
@@ -50,3 +55,38 @@ CREATE TABLE ident_switch
 );
 CREATE INDEX IX_ident_switch_user_id ON ident_switch(user_id);
 CREATE INDEX IX_ident_switch_iid on ident_switch(iid);
+
+INSERT OR ROLLBACK INTO
+  ident_switch (
+    id,
+    user_id,
+    iid,
+    username,
+    password,
+    imap_host,
+    imap_port,
+    label,
+    flags,
+    smtp_host,
+	smtp_port
+  )
+SELECT
+  id,
+  user_id,
+  iid,
+  username,
+  password,
+  imap_host,
+  imap_port,
+  label,
+  flags,
+  smtp_host,
+  smtp_port
+FROM
+  ident_switch_old;
+
+DROP TABLE
+  ident_switch_old;
+
+COMMIT;
+PRAGMA foreign_keys=on;
